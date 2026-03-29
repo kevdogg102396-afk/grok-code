@@ -153,8 +153,8 @@ You run inside Grok-Code (by ClawdWorks).
 
 # Branding
 Write-Host ""
-Write-Host "  `u{2605}    `u{2726}       `u{2605}          `u{2726}        `u{2605}       `u{2726}      `u{2605}" -ForegroundColor Yellow
-Write-Host "     `u{2726}          `u{2605}         `u{2726}           `u{2605}             `u{2726}" -ForegroundColor Yellow
+Write-Host "  *    .       *          .        *       .      *" -ForegroundColor Yellow
+Write-Host "     .          *         .           *             ." -ForegroundColor Yellow
 Write-Host ""
 Write-Host "   GROK CODE" -ForegroundColor White
 Write-Host "   by ClawdWorks" -ForegroundColor Cyan
@@ -162,7 +162,7 @@ Write-Host ""
 Write-Host "   $FriendlyModel " -ForegroundColor White -NoNewline
 Write-Host "| /grok4fast /grok4 /grok3mini to switch" -ForegroundColor DarkGray
 Write-Host ""
-Write-Host "  `u{2605}    `u{2726}       `u{2605}          `u{2726}        `u{2605}       `u{2726}      `u{2605}" -ForegroundColor Yellow
+Write-Host "  *    .       *          .        *       .      *" -ForegroundColor Yellow
 Write-Host ""
 
 # Launch
