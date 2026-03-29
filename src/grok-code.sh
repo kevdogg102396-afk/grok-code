@@ -8,7 +8,7 @@ start_proxy() {
     echo "ERROR: XAI_API_KEY not set. Get one at https://console.x.ai"
     exit 1
   fi
-  node /usr/local/bin/grok-proxy &
+  node /usr/local/bin/grok-proxy > /tmp/grok-proxy.log 2>&1 &
   PROXY_PID=$!
 
   # Wait for proxy to be ready
