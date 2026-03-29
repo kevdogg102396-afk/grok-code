@@ -1,8 +1,8 @@
 FROM node:22-slim
 
-# System deps (no Python needed!)
+# System deps
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    git curl ca-certificates \
+    git curl ca-certificates python3 \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Claude Code CLI globally
