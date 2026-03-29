@@ -33,6 +33,35 @@ const MODEL_NAMES = {
   'grok-code-fast-1': 'Grok Code Fast',
 };
 
+// Decode HTML entities that Grok sometimes injects into tool call arguments
+// Grok's web-heavy training causes it to HTML-encode special chars in bash commands
+function decodeHtmlEntities(str) {
+  if (typeof str !== 'string') return str;
+  return str
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&#x27;/g, "'")
+    .replace(/&#x2F;/g, '/')
+    .replace(/&apos;/g, "'");
+}
+
+// Recursively decode HTML entities in tool call arguments
+function decodeToolArgs(obj) {
+  if (typeof obj === 'string') return decodeHtmlEntities(obj);
+  if (Array.isArray(obj)) return obj.map(decodeToolArgs);
+  if (obj && typeof obj === 'object') {
+    const result = {};
+    for (const [key, value] of Object.entries(obj)) {
+      result[key] = decodeToolArgs(value);
+    }
+    return result;
+  }
+  return obj;
+}
+
 // Convert Anthropic content blocks to OpenAI message content
 function anthropicToOpenAIContent(content) {
   if (typeof content === 'string') return content;
@@ -165,7 +194,7 @@ function openaiToAnthropicResponse(openaiResp, model) {
   if (msg.tool_calls) {
     for (const tc of msg.tool_calls) {
       let input = {};
-      try { input = JSON.parse(tc.function.arguments); } catch {}
+      try { input = decodeToolArgs(JSON.parse(tc.function.arguments)); } catch {}
       content.push({
         type: 'tool_use',
         id: tc.id,
@@ -276,13 +305,14 @@ function convertStreamChunk(chunk, state) {
       }
 
       if (tc.function?.arguments) {
-        state[`tool_${tcIdx}_args`] = (state[`tool_${tcIdx}_args`] || '') + tc.function.arguments;
+        const decodedArgs = decodeHtmlEntities(tc.function.arguments);
+        state[`tool_${tcIdx}_args`] = (state[`tool_${tcIdx}_args`] || '') + decodedArgs;
         events.push({
           type: 'content_block_delta',
           index: state.blockIndex,
           delta: {
             type: 'input_json_delta',
-            partial_json: tc.function.arguments,
+            partial_json: decodedArgs,
           },
         });
       }
