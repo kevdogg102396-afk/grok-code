@@ -161,26 +161,19 @@ Write-Host ""
 Write-Host "     .    *       .          *        .       *      ." -ForegroundColor Yellow
 Write-Host "  *          .         *           .             *    " -ForegroundColor Yellow
 Write-Host ""
-
-$block = @(
-'   ██████╗ ██████╗  ██████╗ ██╗  ██╗'
-'  ██╔════╝ ██╔══██╗██╔═══██╗██║ ██╔╝'
-'  ██║  ███╗██████╔╝██║   ██║█████╔╝ '
-'  ██║   ██║██╔══██╗██║   ██║██╔═██╗ '
-'  ╚██████╔╝██║  ██║╚██████╔╝██║  ██╗'
-'   ╚═════╝ ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═╝'
-''
-'   ██████╗ ██████╗ ██████╗ ███████╗'
-'  ██╔════╝██╔═══██╗██╔══██╗██╔════╝'
-'  ██║     ██║   ██║██║  ██║█████╗  '
-'  ██║     ██║   ██║██║  ██║██╔══╝  '
-'  ╚██████╗╚██████╔╝██████╔╝███████╗'
-'   ╚═════╝ ╚═════╝ ╚═════╝ ╚══════╝'
-)
-foreach ($line in $block) {
-    Write-Host $line -ForegroundColor White
-}
-
+Write-Host "    _____ _____   ____  _  __" -ForegroundColor White
+Write-Host "   / ____|  __ \ / __ \| |/ /" -ForegroundColor White
+Write-Host "  | |  __| |__) | |  | | ' / " -ForegroundColor White
+Write-Host "  | | |_ |  _  /| |  | |  <  " -ForegroundColor White
+Write-Host "  | |__| | | \ \| |__| | . \ " -ForegroundColor White
+Write-Host "   \_____|_|  \_\\____/|_|\_\" -ForegroundColor White
+Write-Host ""
+Write-Host "    _____ ____  _____  ______ " -ForegroundColor White
+Write-Host "   / ____/ __ \|  __ \|  ____|" -ForegroundColor White
+Write-Host "  | |   | |  | | |  | | |__   " -ForegroundColor White
+Write-Host "  | |   | |  | | |  | |  __|  " -ForegroundColor White
+Write-Host "  | |___| |__| | |__| | |____ " -ForegroundColor White
+Write-Host "   \_____\____/|_____/|______|" -ForegroundColor White
 Write-Host ""
 Write-Host "            by  C l a w d W o r k s" -ForegroundColor Cyan
 Write-Host ""
