@@ -411,8 +411,16 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // Handle HEAD requests (CC sends HEAD / on startup)
+  if (req.method === 'HEAD') {
+    res.writeHead(200);
+    res.end();
+    return;
+  }
+
   // Messages endpoint — the main translation layer
-  if (req.url === '/v1/messages' && req.method === 'POST') {
+  // CC may append query strings like ?beta=true so use startsWith
+  if (req.url.startsWith('/v1/messages') && req.method === 'POST') {
     let body = '';
     req.on('data', c => body += c);
     req.on('end', async () => {
