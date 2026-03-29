@@ -11,11 +11,20 @@ const XAI_BASE = 'https://api.x.ai';
 const XAI_API_KEY = process.env.XAI_API_KEY || '';
 
 // Model mapping: CC model names → xAI model IDs
+// CC appends context suffixes like [1m], [200k] etc — we need to match all variants
 const MODEL_MAP = {
   'claude-sonnet-4-6': process.env.GROK_MODEL || 'grok-4.20-0309-non-reasoning',
   'claude-opus-4-6': 'grok-4.20-0309-reasoning',
   'claude-haiku-4-5-20251001': 'grok-code-fast-1',
 };
+
+// Resolve model name — strips CC context suffixes like [1m], [200k]
+function resolveModel(name) {
+  if (MODEL_MAP[name]) return MODEL_MAP[name];
+  // Strip bracket suffixes: claude-sonnet-4-6[1m] → claude-sonnet-4-6
+  const base = name.replace(/\[.*\]$/, '');
+  return MODEL_MAP[base] || MODEL_MAP['claude-sonnet-4-6'];
+}
 
 // Reverse map for display
 const MODEL_NAMES = {
@@ -380,7 +389,15 @@ const server = http.createServer((req, res) => {
 
   // Models endpoint — CC checks this to validate model names
   if (req.url === '/v1/models' && req.method === 'GET') {
-    const models = Object.keys(MODEL_MAP).map(name => ({
+    // Include base names AND [1m]/[200k] variants that CC may request
+    const baseNames = Object.keys(MODEL_MAP);
+    const variants = [];
+    for (const name of baseNames) {
+      variants.push(name);
+      variants.push(name + '[1m]');
+      variants.push(name + '[200k]');
+    }
+    const models = variants.map(name => ({
       id: name,
       object: 'model',
       created: Date.now(),
@@ -398,7 +415,7 @@ const server = http.createServer((req, res) => {
     req.on('end', async () => {
       try {
         const anthropicReq = JSON.parse(body);
-        const grokModel = MODEL_MAP[anthropicReq.model] || MODEL_MAP['claude-sonnet-4-6'];
+        const grokModel = resolveModel(anthropicReq.model);
         const isStream = anthropicReq.stream === true;
 
         // Build OpenAI request
