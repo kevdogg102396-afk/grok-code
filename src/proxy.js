@@ -12,16 +12,16 @@ const XAI_API_KEY = process.env.XAI_API_KEY || '';
 
 // Model mapping: CC model names → xAI model IDs
 const MODEL_MAP = {
-  'claude-sonnet-4-6': process.env.GROK_MODEL || 'grok-4-1-fast',
-  'claude-opus-4-6': 'grok-4',
-  'claude-haiku-4-5-20251001': 'grok-3-mini',
+  'claude-sonnet-4-6': process.env.GROK_MODEL || 'grok-4.20-0309-non-reasoning',
+  'claude-opus-4-6': 'grok-4.20-0309-reasoning',
+  'claude-haiku-4-5-20251001': 'grok-code-fast-1',
 };
 
 // Reverse map for display
 const MODEL_NAMES = {
-  'grok-4-1-fast': 'Grok 4.1 Fast',
-  'grok-4': 'Grok 4',
-  'grok-3-mini': 'Grok 3 Mini',
+  'grok-4.20-0309-non-reasoning': 'Grok 4.20',
+  'grok-4.20-0309-reasoning': 'Grok 4.20 Reason',
+  'grok-code-fast-1': 'Grok Code Fast',
 };
 
 // Convert Anthropic content blocks to OpenAI message content

@@ -7,9 +7,9 @@ $Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
 
 # Model registry
 $Models = @(
-    @{ id = "grok-4-1-fast"; name = "Grok 4.1 Fast"; desc = "2M context, cheapest, fastest" }
-    @{ id = "grok-4";        name = "Grok 4";         desc = "256K context, full power" }
-    @{ id = "grok-3-mini";   name = "Grok 3 Mini";    desc = "131K context, budget" }
+    @{ id = "grok-4.20-0309-non-reasoning"; name = "Grok 4.20";         desc = "newest flagship, fast" }
+    @{ id = "grok-4.20-0309-reasoning";     name = "Grok 4.20 Reason";  desc = "deep reasoning mode" }
+    @{ id = "grok-code-fast-1";             name = "Grok Code Fast";    desc = "dedicated coding model" }
 )
 
 # Load .env
@@ -28,7 +28,7 @@ if ($firstArg -eq "models") {
     Write-Host ""
     Write-Host "  Available Grok models:" -ForegroundColor White
     Write-Host ""
-    $currentModel = if ($env:GROK_MODEL) { $env:GROK_MODEL } else { "grok-4-1-fast" }
+    $currentModel = if ($env:GROK_MODEL) { $env:GROK_MODEL } else { "grok-4.20-0309-non-reasoning" }
     for ($i = 0; $i -lt $Models.Count; $i++) {
         $m = $Models[$i]
         $num = $i + 1
@@ -80,7 +80,7 @@ if (-not $env:XAI_API_KEY) {
     exit 1
 }
 
-$GrokModel = if ($env:GROK_MODEL) { $env:GROK_MODEL } else { "grok-4-1-fast" }
+$GrokModel = if ($env:GROK_MODEL) { $env:GROK_MODEL } else { "grok-4.20-0309-non-reasoning" }
 $MaxTokens = if ($env:GROK_MAX_TOKENS) { $env:GROK_MAX_TOKENS } else { "16384" }
 
 # Friendly model name
@@ -129,7 +129,7 @@ $env:CLAUDE_CONFIG_DIR = "$GrokDir\.grok-config"
 # Pre-bake onboarding
 $configDir = "$GrokDir\.grok-config"
 if (-not (Test-Path $configDir)) { New-Item -ItemType Directory -Path $configDir -Force | Out-Null }
-$claudeJson = '{"theme":"dark","customApiKeyResponses":{"approved":true}}'
+$claudeJson = '{"hasCompletedOnboarding":true,"theme":"dark","numStartups":5,"customApiKeyResponses":{"approved":true}}'
 [IO.File]::WriteAllText("$configDir\.claude.json", $claudeJson, $Utf8NoBom)
 
 # Write identity
@@ -140,9 +140,9 @@ You are **Grok Agent** — an AI coding agent powered by xAI's Grok models.
 You run inside Grok-Code (by ClawdWorks).
 
 ## Your Models
-- **Grok 4.1 Fast** — default, blazing fast, 2M context window
-- **Grok 4** — full power, complex reasoning, 256K context
-- **Grok 3 Mini** — lightweight and cheap, 131K context
+- **Grok 4.20** — newest flagship, default
+- **Grok 4.20 Reason** — deep reasoning for complex problems
+- **Grok Code Fast** — dedicated coding model, fastest
 
 ## Rules
 - Be direct, casual, no corporate tone
@@ -151,21 +151,39 @@ You run inside Grok-Code (by ClawdWorks).
 '@
 [IO.File]::WriteAllText("$GrokDir\GROK.md", $identity, $Utf8NoBom)
 
-# Branding
+# Branding — BIG ASCII art
+Clear-Host
 Write-Host ""
-Write-Host "  *    .       *          .        *       .      *" -ForegroundColor Yellow
-Write-Host "     .          *         .           *             ." -ForegroundColor Yellow
+Write-Host "     .    *       .          *        .       *      ." -ForegroundColor Yellow
+Write-Host "  *          .         *           .             *    " -ForegroundColor Yellow
 Write-Host ""
-Write-Host "   GROK CODE" -ForegroundColor White
-Write-Host "   by ClawdWorks" -ForegroundColor Cyan
+Write-Host "   ######   ########   #######  ##    ## " -ForegroundColor White
+Write-Host "  ##    ##  ##     ## ##     ## ##   ##  " -ForegroundColor White
+Write-Host "  ##        ##     ## ##     ## ##  ##   " -ForegroundColor White
+Write-Host "  ##   #### ########  ##     ## #####    " -ForegroundColor White
+Write-Host "  ##    ##  ##   ##   ##     ## ##  ##   " -ForegroundColor White
+Write-Host "  ##    ##  ##    ##  ##     ## ##   ##  " -ForegroundColor White
+Write-Host "   ######   ##     ##  #######  ##    ## " -ForegroundColor White
+Write-Host ""
+Write-Host "   ######   #######  ########  ######## " -ForegroundColor White
+Write-Host "  ##    ## ##     ## ##     ## ##        " -ForegroundColor White
+Write-Host "  ##       ##     ## ##     ## ##        " -ForegroundColor White
+Write-Host "  ##       ##     ## ##     ## ######    " -ForegroundColor White
+Write-Host "  ##       ##     ## ##     ## ##        " -ForegroundColor White
+Write-Host "  ##    ## ##     ## ##     ## ##        " -ForegroundColor White
+Write-Host "   ######   #######  ########  ######## " -ForegroundColor White
+Write-Host ""
+Write-Host "            by  C l a w d W o r k s" -ForegroundColor Cyan
+Write-Host ""
+Write-Host "     .    *       .          *        .       *      ." -ForegroundColor Yellow
 Write-Host ""
 Write-Host "   $FriendlyModel " -ForegroundColor White -NoNewline
-Write-Host "| /grok4fast /grok4 /grok3mini to switch" -ForegroundColor DarkGray
+Write-Host "| Grok 4.20 + Grok 4.20 Reason + Grok Code Fast" -ForegroundColor DarkGray
 Write-Host ""
-Write-Host "  *    .       *          .        *       .      *" -ForegroundColor Yellow
+Write-Host "  --------------------------------------------------------" -ForegroundColor DarkGray
 Write-Host ""
 
-# Launch
+# CC's interactive TUI needs winpty on Windows (comes with Git for Windows)
 $winpty = "C:\Program Files\Git\usr\bin\winpty.exe"
 
 if ((Test-Path $winpty) -and -not ($args -contains "--print")) {
