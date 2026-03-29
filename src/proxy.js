@@ -380,6 +380,9 @@ function xaiStreamRequest(path, body, onChunk, onEnd) {
 
 // HTTP server
 const server = http.createServer((req, res) => {
+  // Log all requests for debugging
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+
   // Health check
   if (req.url === '/health/readiness' || req.url === '/health') {
     res.writeHead(200, { 'Content-Type': 'application/json' });

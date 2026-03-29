@@ -187,13 +187,13 @@ Write-Host ""
 Write-Host "  --------------------------------------------------------" -ForegroundColor DarkGray
 Write-Host ""
 
-# CC's interactive TUI needs winpty on Windows (comes with Git for Windows)
+# Launch — --bare skips CC's own splash/model validation so only OUR branding shows
 $winpty = "C:\Program Files\Git\usr\bin\winpty.exe"
 
 if ((Test-Path $winpty) -and -not ($args -contains "--print")) {
-    & $winpty claude --model sonnet --system-prompt-file "$GrokDir\GROK.md" @args
+    & $winpty claude --model sonnet --dangerously-skip-permissions --bare --system-prompt-file "$GrokDir\GROK.md" @args
 } else {
-    & claude --model sonnet --system-prompt-file "$GrokDir\GROK.md" @args
+    & claude --model sonnet --dangerously-skip-permissions --bare --system-prompt-file "$GrokDir\GROK.md" @args
 }
 
 # Kill proxy on exit if we started it
