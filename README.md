@@ -1,45 +1,120 @@
 # Grok-Code by ClawdWorks
 
-**AI coding agent powered by xAI's Grok models. One command install.**
+**The most capable autonomous AI agent for Grok. One command. Full power.**
 
-Grok-Code gives you a full AI coding agent — file editing, bash, MCP servers, autocompact — powered by xAI's Grok models. Grok 4.1 Fast has a 2M token context window at $0.20 per million input tokens.
+Grok-Code turns xAI's Grok models into a fully autonomous coding agent with real tools — file editing, bash execution, web browsing, MCP server integration, persistent memory, and Telegram access. Not a chatbot wrapper. A real agent that can read, write, execute, and iterate on your entire codebase.
 
-### Mac / Linux
+**Grok 4.1 Fast** brings a 2M token context window at $0.20/M input — the cheapest frontier-class agent on the market.
+
+### Install (one command)
+
+**Mac / Linux:**
 ```bash
 curl -fsSL https://raw.githubusercontent.com/kevdogg102396-afk/grok-code/main/install.sh | bash
 ```
 
-### Windows (PowerShell)
+**Windows (PowerShell):**
 ```powershell
 irm https://raw.githubusercontent.com/kevdogg102396-afk/grok-code/main/install.ps1 | iex
 ```
 
-Then:
+Then just run:
 ```
 grok-code
 ```
 
 ---
 
+## What Makes This Different
+
+Most "Grok wrappers" are chat interfaces. Grok-Code is an **autonomous agent** — it doesn't just answer questions, it takes action.
+
+| Feature | Grok-Code | ChatGPT / Grok Web | Other CLI tools |
+|---------|-----------|---------------------|-----------------|
+| Read & write files | Yes | No | Some |
+| Execute bash/Python | Yes | No | Some |
+| MCP server integration | Yes | No | No |
+| Docker sandboxing | Yes | No | No |
+| Telegram bot mode | Yes | No | No |
+| Mid-session model switching | Yes | No | No |
+| Persistent memory | Yes | No | No |
+| One-command install (all platforms) | Yes | N/A | Rarely |
+| No Python dependency | Yes | N/A | No (most need Python) |
+| 2M token context | Yes | Limited | Varies |
+
+### Grok's Unique Powers
+Grok models are trained on real-time X (Twitter) data and have access to **Live Search** — real-time web + X post search, trending topics, and current events. No other AI agent framework gives you this:
+
+- **Real-time X/Twitter intelligence** — search posts, trends, and conversations
+- **Live web search** — up-to-date information beyond the training cutoff
+- **Lowest hallucination rate** — Grok 4 models are benchmarked for strict factual accuracy
+- **Native tool calling** — Grok models are optimized for agentic workflows
+- **Minimal censorship** — Grok actually does what you ask. Post to X, Facebook, automate social media, generate content other models refuse to touch. Pair with Playwright MCP and Grok becomes your uncensored automation engine across any platform
+
+---
+
 ## Models
 
-Switch models anytime during a session:
+Switch models anytime during a session. Three tiers for different needs:
 
 | Model | Context | Cost (in/out per 1M) | Best for |
 |-------|---------|------|----------|
-| **Grok 4.1 Fast** (default) | 2M tokens | $0.20 / $0.50 | Fast coding, huge context |
-| **Grok 4** | 256K tokens | $3.00 / $15.00 | Complex reasoning |
-| **Grok 3 Mini** | 131K tokens | $0.30 / $0.50 | Budget, quick tasks |
+| **Grok 4.1 Fast** (default) | 2M tokens | $0.20 / $0.50 | Fast coding, massive context, daily driver |
+| **Grok 4** | 256K tokens | $3.00 / $15.00 | Complex reasoning, architecture decisions |
+| **Grok 3 Mini** | 131K tokens | $0.30 / $0.50 | Budget tasks, quick questions |
+
+Most coding sessions cost **less than $0.01** on Grok 4.1 Fast.
+
+---
+
+## Capabilities
+
+**Code & Files**
+- Generate, edit, and debug code in any language
+- Read and write files across your entire project
+- Run scripts (Python, Node.js, Bash, anything)
+- Git operations (commit, branch, diff, log)
+
+**Automation & Integration**
+- MCP server support — Playwright, GitHub, Slack, Notion, databases, anything
+- Browser automation via Playwright MCP — post to X, scrape sites, fill forms, automate workflows
+- Telegram bot mode — manage your agent from your phone
+- Docker sandboxing — safe execution in isolated containers
+- Persistent conversation memory across sessions
+
+**Research & Intelligence**
+- Web fetching and browsing
+- Real-time data via Grok's Live Search
+- X/Twitter trend analysis and post search
+- Full browser control — navigate, screenshot, interact with any web app
 
 ---
 
 ## Install Modes
 
 ### Docker (sandboxed) — recommended
-Runs in a secure container. Can't access your files. Safe for anything.
+Runs in a secure container. The AI can't access your host machine. Safe for untrusted tasks, experiments, or anything you want fully isolated.
 
 ### Local (full power)
-Full machine access — filesystem, browser, MCP servers, everything.
+Full machine access — filesystem, browser, MCP servers, git, everything. Maximum capability for trusted workflows.
+
+---
+
+## Telegram Bridge
+
+Deploy Grok-Code as a persistent Telegram bot — your AI agent in your pocket, 24/7:
+
+```bash
+TELEGRAM_BOT_TOKEN=xxx grok-code telegram
+```
+
+Commands:
+- `/grok4fast` — Switch to Grok 4.1 Fast (default)
+- `/grok4` — Switch to Grok 4 (full power)
+- `/grok3mini` — Switch to Grok 3 Mini (budget)
+- `/models` — Show current model
+
+Conversation history persists across reboots when using Docker volume mounts.
 
 ---
 
@@ -49,23 +124,17 @@ Full machine access — filesystem, browser, MCP servers, everything.
 - **Docker** (sandboxed mode only)
 - **xAI API key** — get one at [console.x.ai](https://console.x.ai)
 
-No Python required. No LiteLLM. Just Node.js.
+**No Python. No pip. No LiteLLM.** Just Node.js and your xAI key. The lightest autonomous agent install on the market.
 
 ---
 
-## Telegram Bridge
+## Architecture
 
-Run Grok-Code as a Telegram bot:
-
-```bash
-TELEGRAM_BOT_TOKEN=xxx grok-code telegram
+```
+You → Grok-Code CLI → Node.js Proxy → xAI API (Grok models)
 ```
 
-Commands in Telegram:
-- `/grok4fast` — Switch to Grok 4.1 Fast
-- `/grok4` — Switch to Grok 4
-- `/grok3mini` — Switch to Grok 3 Mini
-- `/models` — Show current model
+The custom Node.js proxy translates API formats with zero external dependencies. No bloated middleware, no Python runtime, no package conflicts. Start to agent in under 5 seconds.
 
 ---
 
