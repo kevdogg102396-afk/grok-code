@@ -126,11 +126,15 @@ $env:ANTHROPIC_BASE_URL = "http://127.0.0.1:4000"
 $env:ANTHROPIC_API_KEY = "grok-code-local"
 $env:CLAUDE_CONFIG_DIR = "$GrokDir\.grok-config"
 
-# Pre-bake onboarding
+# Pre-bake onboarding (must match Docker config exactly to skip ALL prompts)
 $configDir = "$GrokDir\.grok-config"
 if (-not (Test-Path $configDir)) { New-Item -ItemType Directory -Path $configDir -Force | Out-Null }
-$claudeJson = '{"hasCompletedOnboarding":true,"theme":"dark","numStartups":5,"customApiKeyResponses":{"approved":true}}'
+$claudeJson = '{"hasCompletedOnboarding":true,"lastOnboardingVersion":"2.1.83","theme":"dark","numStartups":5,"bypassPermissionsModeAccepted":true,"customApiKeyResponses":{"approved":["grok-code-local"],"rejected":[]}}'
 [IO.File]::WriteAllText("$configDir\.claude.json", $claudeJson, $Utf8NoBom)
+
+# Settings to skip dangerous mode prompt
+$settingsJson = '{"skipDangerousModePermissionPrompt":true}'
+[IO.File]::WriteAllText("$configDir\settings.json", $settingsJson, $Utf8NoBom)
 
 # Write identity
 $identity = @'
@@ -151,34 +155,41 @@ You run inside Grok-Code (by ClawdWorks).
 '@
 [IO.File]::WriteAllText("$GrokDir\GROK.md", $identity, $Utf8NoBom)
 
-# Branding — BIG ASCII art
+# Branding
 Clear-Host
 Write-Host ""
 Write-Host "     .    *       .          *        .       *      ." -ForegroundColor Yellow
 Write-Host "  *          .         *           .             *    " -ForegroundColor Yellow
 Write-Host ""
-Write-Host "   ######   ########   #######  ##    ## " -ForegroundColor White
-Write-Host "  ##    ##  ##     ## ##     ## ##   ##  " -ForegroundColor White
-Write-Host "  ##        ##     ## ##     ## ##  ##   " -ForegroundColor White
-Write-Host "  ##   #### ########  ##     ## #####    " -ForegroundColor White
-Write-Host "  ##    ##  ##   ##   ##     ## ##  ##   " -ForegroundColor White
-Write-Host "  ##    ##  ##    ##  ##     ## ##   ##  " -ForegroundColor White
-Write-Host "   ######   ##     ##  #######  ##    ## " -ForegroundColor White
-Write-Host ""
-Write-Host "   ######   #######  ########  ######## " -ForegroundColor White
-Write-Host "  ##    ## ##     ## ##     ## ##        " -ForegroundColor White
-Write-Host "  ##       ##     ## ##     ## ##        " -ForegroundColor White
-Write-Host "  ##       ##     ## ##     ## ######    " -ForegroundColor White
-Write-Host "  ##       ##     ## ##     ## ##        " -ForegroundColor White
-Write-Host "  ##    ## ##     ## ##     ## ##        " -ForegroundColor White
-Write-Host "   ######   #######  ########  ######## " -ForegroundColor White
+
+$block = @(
+'   ██████╗ ██████╗  ██████╗ ██╗  ██╗'
+'  ██╔════╝ ██╔══██╗██╔═══██╗██║ ██╔╝'
+'  ██║  ███╗██████╔╝██║   ██║█████╔╝ '
+'  ██║   ██║██╔══██╗██║   ██║██╔═██╗ '
+'  ╚██████╔╝██║  ██║╚██████╔╝██║  ██╗'
+'   ╚═════╝ ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═╝'
+''
+'   ██████╗ ██████╗ ██████╗ ███████╗'
+'  ██╔════╝██╔═══██╗██╔══██╗██╔════╝'
+'  ██║     ██║   ██║██║  ██║█████╗  '
+'  ██║     ██║   ██║██║  ██║██╔══╝  '
+'  ╚██████╗╚██████╔╝██████╔╝███████╗'
+'   ╚═════╝ ╚═════╝ ╚═════╝ ╚══════╝'
+)
+foreach ($line in $block) {
+    Write-Host $line -ForegroundColor White
+}
+
 Write-Host ""
 Write-Host "            by  C l a w d W o r k s" -ForegroundColor Cyan
 Write-Host ""
 Write-Host "     .    *       .          *        .       *      ." -ForegroundColor Yellow
 Write-Host ""
-Write-Host "   $FriendlyModel " -ForegroundColor White -NoNewline
-Write-Host "| Grok 4.20 + Grok 4.20 Reason + Grok Code Fast" -ForegroundColor DarkGray
+Write-Host "   Model: " -ForegroundColor White -NoNewline
+Write-Host "$FriendlyModel" -ForegroundColor Cyan
+Write-Host "   Switch: " -ForegroundColor White -NoNewline
+Write-Host "Grok 4.20  |  Grok 4.20 Reason  |  Grok Code Fast" -ForegroundColor DarkGray
 Write-Host ""
 Write-Host "  --------------------------------------------------------" -ForegroundColor DarkGray
 Write-Host ""
