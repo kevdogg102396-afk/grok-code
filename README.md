@@ -138,8 +138,12 @@ The custom Node.js proxy translates API formats with zero external dependencies.
 
 ---
 
-## License
+## License & Legal
 
-Apache 2.0 — see [LICENSE](LICENSE).
+The Grok-Code wrapper (proxy, splash screen, install scripts, Telegram bridge) is licensed under Apache 2.0 — see [LICENSE](LICENSE).
+
+**Important:** Grok-Code requires the Claude Code CLI (`@anthropic-ai/claude-code`), which is proprietary software by Anthropic PBC. Your use of the Claude Code CLI is subject to [Anthropic's terms](https://www.anthropic.com/legal/commercial-terms). Grok-Code does not modify the CLI binary — it routes API calls through a custom proxy to xAI's Grok models.
+
+**Not affiliated with Anthropic or xAI.** Grok-Code is an independent project by ClawdWorks. "Claude Code" is a trademark of Anthropic PBC. "Grok" is a trademark of xAI Corp.
 
 Built by [ClawdWorks](https://kevdogg102396-afk.github.io/clawdworks-site/).

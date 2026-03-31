@@ -5,8 +5,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git curl ca-certificates python3 \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Claude Code CLI globally
-RUN npm install -g @anthropic-ai/claude-code
+# NOTE: Claude Code CLI is installed at runtime by the entrypoint script,
+# not at build time. This keeps the Docker image free of proprietary code.
+# The CLI is subject to Anthropic's Commercial Terms of Service.
 
 # Create sandboxed workspace
 RUN useradd -m -s /bin/bash grok
@@ -23,6 +24,10 @@ RUN chmod +x /usr/local/bin/grok-code /usr/local/bin/grok-splash
 COPY src/GROK.md /workspace/GROK.md
 COPY src/mcp.json /workspace/.mcp.json
 RUN chown grok:grok /workspace/GROK.md /workspace/.mcp.json
+
+# Give grok user write access to npm global prefix (for runtime CLI install)
+RUN mkdir -p /usr/local/lib/node_modules /usr/local/bin && \
+    chown -R grok:grok /usr/local/lib/node_modules /usr/local/bin
 
 # Pre-configure to skip first-run wizard
 RUN mkdir -p /home/grok/.claude && chown -R grok:grok /home/grok/.claude
