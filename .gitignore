@@ -1,0 +1,16 @@
+node_modules/
+dist/
+bun.lock
+*.lock
+.DS_Store
+Thumbs.db
+
+# Don't ship the key generator
+scripts/keygen.ts
+scripts/generate-keys.ts
+
+# User data
+.grok-code/
+
+# Build artifacts
+*.exe
