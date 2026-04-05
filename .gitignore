@@ -14,3 +14,8 @@ scripts/generate-keys.ts
 
 # Build artifacts
 *.exe
+
+# Internal docs
+BUILDPLAN-V2.md
+HANDOVER-PROMPT.md
+promo/
