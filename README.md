@@ -18,12 +18,12 @@ You → grok-code CLI → Grok 4.20 / Reason / Fast → Your codebase (read, wri
 
 **Linux / macOS:**
 ```bash
-curl -fsSL https://grok.clawdworks.com/install.sh | bash
+curl -fsSL https://github.com/kevdogg102396-afk/grok-code/install.sh | bash
 ```
 
 **Windows (PowerShell):**
 ```powershell
-irm https://grok.clawdworks.com/install.ps1 | iex
+irm https://github.com/kevdogg102396-afk/grok-code/install.ps1 | iex
 ```
 
 **Requirements:**
@@ -436,7 +436,7 @@ Unlock everything:
 - ✅ Priority support
 - ✅ Early access to new models/tools
 
-**Get Pro:** https://grok.clawdworks.com
+**Get Pro:** https://github.com/kevdogg102396-afk/grok-code
 
 Free version includes:
 - 1 companion (picked on first launch)
@@ -518,7 +518,7 @@ Grok-Code v2 is licensed under **Apache 2.0**. See [LICENSE](LICENSE).
 
 ## Built By
 
-[ClawdWorks](https://grok.clawdworks.com) — AI agents for developers.
+[ClawdWorks](https://github.com/kevdogg102396-afk/grok-code) — AI agents for developers.
 
 ---
 

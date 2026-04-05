@@ -79,6 +79,6 @@ export function isPro(): boolean {
 
 export function requirePro(featureName: string): string | null {
   if (isPro()) return null;
-  return `⭐ **${featureName}** is a Pro feature.\n\nUpgrade for $5 (one-time): https://grok.clawdworks.com\nThen activate: /activate <your-key>\n\nPro includes: all companions, all personalities, sub-agents, skills, advanced memory.`;
+  return `⭐ **${featureName}** is a Pro feature.\n\nUpgrade for $5 (one-time): https://github.com/kevdogg102396-afk/grok-code\nThen activate: /activate <your-key>\n\nPro includes: all companions, all personalities, sub-agents, skills, advanced memory.`;
 }
 

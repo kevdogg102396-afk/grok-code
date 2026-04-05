@@ -161,13 +161,13 @@ export function App({ agent, modelAlias, skipSplash, initialMode = 'auto', initi
           const proStatus = isPro() ? '✅ Pro (activated)' : '🆓 Free';
           setMessages(prev => [...prev, {
             role: 'assistant',
-            content: `**GROK CODE v2.0.0** — ${proStatus}\nby ClawdWorks\n\nAutonomous AI coding agent powered by xAI's Grok.\n\n**Support the project:**\n☕ Buy me a coffee: https://buymeacoffee.com/clawdworks\n⭐ Star on GitHub: https://github.com/kevdogg102396-afk/grok-code\n\n${isPro() ? 'Thanks for being Pro! All features unlocked.' : '**Upgrade to Pro ($5 one-time):**\nAll companions, all personalities, sub-agents, skills.\nGet it at: https://grok.clawdworks.com\nActivate: /activate <your-key>'}\n\nBuilt with ❤️ by Kevin Cline & Claude`,
+            content: `**GROK CODE v2.0.0** — ${proStatus}\nby ClawdWorks\n\nAutonomous AI coding agent powered by xAI's Grok.\n\n**Support the project:**\n☕ Buy me a coffee: https://buymeacoffee.com/clawdworks\n⭐ Star on GitHub: https://github.com/kevdogg102396-afk/grok-code\n\n${isPro() ? 'Thanks for being Pro! All features unlocked.' : '**Upgrade to Pro ($5 one-time):**\nAll companions, all personalities, sub-agents, skills.\nGet it at: https://github.com/kevdogg102396-afk/grok-code\nActivate: /activate <your-key>'}\n\nBuilt with ❤️ by Kevin Cline & Claude`,
           }]);
           return;
         }
         case 'activate': {
           if (!arg) {
-            setMessages(prev => [...prev, { role: 'assistant', content: 'Usage: /activate <license-key>\n\nGet a key at: https://grok.clawdworks.com' }]);
+            setMessages(prev => [...prev, { role: 'assistant', content: 'Usage: /activate <license-key>\n\nGet a key at: https://github.com/kevdogg102396-afk/grok-code' }]);
           } else {
             const result = activateLicense(arg);
             setMessages(prev => [...prev, { role: 'assistant', content: result.message }]);

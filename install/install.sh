@@ -1,6 +1,6 @@
 #!/bin/bash
 # Grok-Code Installer — Linux/macOS
-# Usage: curl -fsSL https://grok.clawdworks.com/install.sh | bash
+# Usage: curl -fsSL https://raw.githubusercontent.com/kevdogg102396-afk/grok-code/master/install.sh | bash
 
 set -e
 
