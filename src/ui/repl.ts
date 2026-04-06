@@ -391,7 +391,7 @@ ${c.bold('Commands:')}
       if (isPro()) {
         console.log('Thanks for being Pro! All features unlocked.');
       } else {
-        console.log(`Upgrade to Pro ($5): https://github.com/kevdogg102396-afk/grok-code`);
+        console.log(`Upgrade to Pro ($5): https://grok-code-checkout.kevdogg102396.workers.dev`);
         console.log(`Activate: /activate <key>`);
       }
       console.log('');
@@ -405,7 +405,7 @@ ${c.bold('Commands:')}
 
     case 'activate': {
       if (!arg) {
-        console.log('\nUsage: /activate <license-key>\nGet a key at: https://github.com/kevdogg102396-afk/grok-code\n');
+        console.log('\nUsage: /activate <license-key>\nGet a key at: https://grok-code-checkout.kevdogg102396.workers.dev\n');
       } else {
         const result = activateLicense(arg);
         console.log(`\n${result.message}\n`);
