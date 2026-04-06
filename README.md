@@ -18,12 +18,12 @@ You → grok-code CLI → Grok 4.20 / Reason / Fast → Your codebase (read, wri
 
 **Linux / macOS:**
 ```bash
-curl -fsSL https://github.com/kevdogg102396-afk/grok-code/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/kevdogg102396-afk/grok-code/master/install/install.sh | bash
 ```
 
 **Windows (PowerShell):**
 ```powershell
-irm https://github.com/kevdogg102396-afk/grok-code/install.ps1 | iex
+irm https://raw.githubusercontent.com/kevdogg102396-afk/grok-code/master/install/install.ps1 | iex
 ```
 
 **Requirements:**

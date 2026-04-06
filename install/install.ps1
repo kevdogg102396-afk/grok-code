@@ -1,5 +1,5 @@
 # Grok-Code Installer — Windows
-# Usage: irm https://raw.githubusercontent.com/kevdogg102396-afk/grok-code/master/install.ps1 | iex
+# Usage: irm https://raw.githubusercontent.com/kevdogg102396-afk/grok-code/master/install/install.ps1 | iex
 
 $ErrorActionPreference = "Stop"
 
