@@ -3,23 +3,45 @@ import { resolve, join } from 'path';
 import { MCPClient } from './client.js';
 import type { MCPServerConfig } from './types.js';
 
-export async function loadMCPServers(cwd: string): Promise<MCPClient[]> {
+export async function loadMCPServers(cwd: string, options?: { onUntrustedConfig?: (path: string, servers: string[]) => Promise<boolean> }): Promise<MCPClient[]> {
   const clients: MCPClient[] = [];
+  const homeDir = process.env.HOME || process.env.USERPROFILE || '.';
 
   // Check multiple config locations
   const configPaths = [
-    resolve(cwd, '.mcp.json'),
-    resolve(cwd, 'mcp.json'),
-    join(process.env.HOME || process.env.USERPROFILE || '.', '.grok-code', 'mcp.json'),
+    { path: resolve(cwd, '.mcp.json'), trusted: false },
+    { path: resolve(cwd, 'mcp.json'), trusted: false },
+    { path: join(homeDir, '.grok-code', 'mcp.json'), trusted: true }, // user's own config is always trusted
   ];
 
   let config: Record<string, MCPServerConfig> = {};
 
-  for (const configPath of configPaths) {
+  for (const { path: configPath, trusted } of configPaths) {
     if (existsSync(configPath)) {
       try {
         const raw = JSON.parse(readFileSync(configPath, 'utf-8'));
         const servers = raw.mcpServers || raw;
+        const serverNames = Object.keys(servers);
+
+        if (serverNames.length === 0) continue;
+
+        // Warn about project-local MCP configs (potential untrusted repo attack)
+        if (!trusted) {
+          console.error(`\n\u26a0\ufe0f  [MCP] Found project MCP config: ${configPath}`);
+          console.error(`   Servers: ${serverNames.join(', ')}`);
+          console.error(`   WARNING: MCP servers execute commands on your machine.`);
+          console.error(`   If you didn't create this file, it may be malicious.\n`);
+
+          // If an interactive callback is provided, ask for permission
+          if (options?.onUntrustedConfig) {
+            const allowed = await options.onUntrustedConfig(configPath, serverNames);
+            if (!allowed) {
+              console.error(`[MCP] Skipped untrusted config: ${configPath}`);
+              continue;
+            }
+          }
+        }
+
         config = { ...config, ...servers };
       } catch (err) {
         console.error(`[MCP] Failed to parse ${configPath}:`, err);

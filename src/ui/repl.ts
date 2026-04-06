@@ -80,7 +80,7 @@ export async function startRepl(config: ReplConfig): Promise<void> {
       if (trimmed.startsWith('/')) {
         const [cmd, ...rest] = trimmed.slice(1).split(' ');
         const arg = rest.join(' ');
-        const handled = handleCommand(cmd, arg, agent, permissions, currentMode, isSandboxed, companionId, modelAlias,
+        const handled = await handleCommand(cmd, arg, agent, permissions, currentMode, isSandboxed, companionId, modelAlias,
           (m) => { currentMode = m; },
           (s) => { isSandboxed = s; },
           (cid) => { companionId = cid; }
@@ -267,14 +267,14 @@ async function pickCharacter(rl: readline.Interface): Promise<string> {
 }
 
 // ── Slash Commands ──
-function handleCommand(
+async function handleCommand(
   cmd: string, arg: string,
   agent: Agent, permissions: Permissions,
   mode: PermissionMode, sandboxed: boolean, companionId: string, modelAlias: string,
   setMode: (m: PermissionMode) => void,
   setSandboxed: (s: boolean) => void,
   setCompanionId: (id: string) => void,
-): string | void {
+): Promise<string | void> {
   switch (cmd) {
     case 'quit':
     case 'exit':

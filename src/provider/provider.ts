@@ -44,7 +44,8 @@ export interface ToolSchema {
 }
 
 export class Provider {
-  readonly apiKey: string;
+  // API key is private — not accessible to MCP tools or other in-process code
+  private _apiKey: string;
   readonly baseUrl: string;
   private modelAlias: string;
   private modelDef: ModelDefinition;
@@ -52,7 +53,7 @@ export class Provider {
   private maxRetries: number;
 
   constructor(config: ProviderConfig = {}) {
-    this.apiKey = config.apiKey || process.env.XAI_API_KEY || '';
+    this._apiKey = config.apiKey || process.env.XAI_API_KEY || '';
     this.baseUrl = config.baseUrl || 'https://api.x.ai';
     this.maxTokens = config.maxTokens || 16384;
     this.maxRetries = config.maxRetries ?? 3;
@@ -63,6 +64,11 @@ export class Provider {
     if (!this.modelDef) {
       throw new Error(`Unknown model: ${alias}. Available: ${Object.keys(MODELS).join(', ')}`);
     }
+  }
+
+  /** Get the API key for creating sub-providers. Returns masked key for logging. */
+  getApiKeyForSubAgent(): string {
+    return this._apiKey;
   }
 
   get modelName(): string { return this.modelDef.name; }
@@ -127,7 +133,7 @@ export class Provider {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${this.apiKey}`,
+            Authorization: `Bearer ${this._apiKey}`,
           },
           body: JSON.stringify(body),
           signal: options.signal,

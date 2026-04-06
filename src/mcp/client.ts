@@ -6,9 +6,11 @@ export class MCPClient {
   private config: MCPServerConfig;
   private process: Subprocess | null = null;
   private nextId = 1;
-  private pendingRequests = new Map<number, { resolve: (v: any) => void; reject: (e: any) => void }>();
+  private pendingRequests = new Map<number, { resolve: (v: any) => void; reject: (e: any) => void; timer: ReturnType<typeof setTimeout> }>();
   private buffer = '';
   private connected = false;
+  private stdoutReady: Promise<void> | null = null;
+  private stdoutResolve: (() => void) | null = null;
 
   constructor(config: MCPServerConfig) {
     this.config = config;
@@ -24,8 +26,12 @@ export class MCPClient {
       env: { ...process.env, ...this.config.env },
     });
 
-    // Read stdout for responses
+    // Start stdout reader BEFORE sending initialize —
+    // fixes race condition where fast MCP server response could be lost
+    this.stdoutReady = new Promise(resolve => { this.stdoutResolve = resolve; });
     this.readStdout();
+    // Wait for reader to be actively consuming before sending anything
+    await this.stdoutReady;
 
     // Initialize
     await this.send('initialize', {
@@ -51,6 +57,9 @@ export class MCPClient {
 
     const reader = stdout.getReader();
     const decoder = new TextDecoder();
+
+    // Signal that the reader is now active and ready to receive data
+    this.stdoutResolve?.();
 
     try {
       while (true) {
@@ -78,6 +87,8 @@ export class MCPClient {
       if (msg.id !== undefined) {
         const pending = this.pendingRequests.get(msg.id);
         if (pending) {
+          // Clear the timeout timer to prevent leak
+          clearTimeout(pending.timer);
           this.pendingRequests.delete(msg.id);
           if (msg.error) {
             pending.reject(new Error(`MCP error: ${msg.error.message}`));
@@ -101,17 +112,17 @@ export class MCPClient {
     };
 
     return new Promise((resolve, reject) => {
-      this.pendingRequests.set(id, { resolve, reject });
-      const data = JSON.stringify(request) + '\n';
-      (this.process?.stdin as import('bun').FileSink | undefined)?.write(data);
-
-      // Timeout after 30s
-      setTimeout(() => {
+      // Set timeout with cleanup — timer reference stored so handleLine can clear it
+      const timer = setTimeout(() => {
         if (this.pendingRequests.has(id)) {
           this.pendingRequests.delete(id);
           reject(new Error(`MCP request timeout: ${method}`));
         }
       }, 30000);
+
+      this.pendingRequests.set(id, { resolve, reject, timer });
+      const data = JSON.stringify(request) + '\n';
+      (this.process?.stdin as import('bun').FileSink | undefined)?.write(data);
     });
   }
 
@@ -154,6 +165,12 @@ export class MCPClient {
   }
 
   disconnect(): void {
+    // Clean up all pending request timers
+    for (const [, pending] of this.pendingRequests) {
+      clearTimeout(pending.timer);
+    }
+    this.pendingRequests.clear();
+
     if (this.process) {
       this.process.kill();
       this.process = null;

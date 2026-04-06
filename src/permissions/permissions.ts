@@ -21,6 +21,29 @@ const WRITE_TOOLS = new Set([
   'bash', 'write', 'edit', 'multi_edit', 'web_fetch', 'memory', 'subagent',
 ]);
 
+// Shell expansion patterns that can bypass sandbox path checks
+const SHELL_EXPANSION_PATTERNS: Array<{ pattern: RegExp; reason: string }> = [
+  { pattern: /\$\(/, reason: 'command substitution $()' },
+  { pattern: /`[^`]+`/, reason: 'backtick command substitution' },
+  { pattern: /\$\{[^}]*\}/, reason: 'variable expansion ${}' },
+  { pattern: /\$HOME\b/, reason: '$HOME variable' },
+  { pattern: /\$USER(?:PROFILE)?\b/, reason: '$USER/$USERPROFILE variable' },
+  { pattern: /\$PWD\b/, reason: '$PWD variable' },
+  { pattern: /\$OLDPWD\b/, reason: '$OLDPWD variable' },
+  { pattern: /\$(?:TEMP|TMP|TMPDIR)\b/, reason: '$TEMP/$TMP variable' },
+  { pattern: /\$(?:PATH|LD_LIBRARY_PATH|LD_PRELOAD)\b/, reason: 'PATH/library variable' },
+  { pattern: /\$(?:XAI_API_KEY|API_KEY|SECRET|TOKEN|PASSWORD|PRIVATE_KEY)\b/i, reason: 'secret/credential variable' },
+  { pattern: /\beval\s/, reason: 'eval command (arbitrary execution)' },
+  { pattern: /\bsource\s/, reason: 'source command' },
+  { pattern: /\b\.\s+\//, reason: 'dot-source command' },
+  { pattern: /\bexec\s/, reason: 'exec command' },
+  { pattern: /\/proc\/self\//, reason: '/proc/self access' },
+  { pattern: /\/dev\/tcp\//, reason: '/dev/tcp network access' },
+  { pattern: /\benv\b\s/, reason: 'env command (environment access)' },
+  { pattern: /\bprintenv\b/, reason: 'printenv command' },
+  { pattern: /\bset\b\s*$/, reason: 'set command (dump all variables)' },
+];
+
 export class Permissions {
   private mode: PermissionMode;
   private jailDir: string | null = null;
@@ -95,8 +118,21 @@ export class Permissions {
     if (toolName === 'bash' && args.command) {
       const cmd = args.command as string;
 
+      // Block shell expansion tricks that could bypass path checks
+      // This catches: $(), backticks, $HOME, $USER, eval, exec, etc.
+      for (const { pattern, reason } of SHELL_EXPANSION_PATTERNS) {
+        if (pattern.test(cmd)) {
+          return {
+            allowed: false,
+            needsConfirm: false,
+            reason: `\u{1F512} Sandbox: blocked shell expansion (${reason})\n   Command: ${cmd.slice(0, 100)}`,
+          };
+        }
+      }
+
       // Safe commands that should always work even in sandbox
       // (opening files in browser, editors, etc.)
+      // NOTE: shell expansion tricks are caught above, so these can't be weaponized
       const safeCommandPatterns = [
         /^\s*start\s/i,              // Windows: open file in default app
         /^\s*explorer\s/i,           // Windows: open explorer
@@ -112,7 +148,6 @@ export class Permissions {
       const isSafeCommand = safeCommandPatterns.some(p => p.test(cmd));
 
       // Block absolute paths outside jail (e.g. cat /etc/passwd, ls C:\Users)
-      // BUT skip this check for safe commands like 'start', 'node', 'git', etc.
       if (!isSafeCommand) {
         const absPathMatch = cmd.match(/(?:^|\s)(\/[a-zA-Z][\w\-\/\.]*|[A-Z]:\\[\w\-\\\.]*)/g);
         if (absPathMatch) {

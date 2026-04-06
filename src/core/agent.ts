@@ -6,6 +6,8 @@ import type { AssembledToolCall } from '../provider/stream-parser.js';
 
 const DEFAULT_MAX_TOOL_LOOPS = 30;
 const DEFAULT_TOOL_TIMEOUT = 120000;
+const MAX_TOOL_RESULT_CHARS = 100000; // 100KB max per tool result to prevent memory blow-up
+const MAX_TOTAL_TOOL_RESULT_CHARS = 2_000_000; // 2MB total tool results per session
 
 export interface AgentConfig {
   provider: Provider;
@@ -39,6 +41,7 @@ export class Agent {
   private toolTimeout: number;
   private sessionId: string;
   private totalUsage = { prompt_tokens: 0, completion_tokens: 0 };
+  private totalToolResultChars = 0;
   private requestPermission?: (toolName: string, args: Record<string, any>) => Promise<boolean>;
 
   // Callbacks
@@ -207,10 +210,28 @@ export class Agent {
           consecutiveErrors = 0; // reset so it can try again after changing approach
         }
 
+        // Cap individual result size
+        resultContent = resultContent.slice(0, MAX_TOOL_RESULT_CHARS);
+
+        // Track total tool result memory — bail if session is consuming too much
+        this.totalToolResultChars += resultContent.length;
+        if (this.totalToolResultChars > MAX_TOTAL_TOOL_RESULT_CHARS) {
+          this.messages.push({
+            role: 'tool',
+            tool_call_id: tc.id,
+            content: 'Error: Session memory limit reached (2MB of tool results). Summarize your findings and present them to the user. Start fresh if needed.',
+          });
+          return {
+            text: 'Session memory limit reached. Tool results exceeded 2MB total.',
+            toolResults,
+            error: 'Memory safety limit: total tool results exceeded 2MB',
+          };
+        }
+
         this.messages.push({
           role: 'tool',
           tool_call_id: tc.id,
-          content: resultContent.slice(0, 100000),
+          content: resultContent,
         });
 
         toolResults.push({
@@ -242,6 +263,7 @@ export class Agent {
   reset(): void {
     this.messages = [];
     this.totalUsage = { prompt_tokens: 0, completion_tokens: 0 };
+    this.totalToolResultChars = 0;
   }
 
   exportState() {

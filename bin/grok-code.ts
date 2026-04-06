@@ -89,6 +89,8 @@ if (!process.env.XAI_API_KEY) {
 const cwd = process.cwd();
 
 // Auto-read GROK.md or CLAUDE.md from cwd (project instructions)
+// WARNING: These files are user-controlled and could contain prompt injection
+// in untrusted repos. We load them but warn the user.
 let projectContext = '';
 const projectFiles = ['GROK.md', 'CLAUDE.md', '.grok-code.md'];
 for (const file of projectFiles) {
@@ -96,6 +98,14 @@ for (const file of projectFiles) {
   if (existsSync(filePath)) {
     try {
       const content = readFileSync(filePath, 'utf-8');
+      // Warn about project instruction files in non-home directories
+      const homeDir = process.env.HOME || process.env.USERPROFILE || '';
+      if (homeDir && !cwd.startsWith(homeDir.replace(/[\/\\]+$/, '') + '/') && !cwd.startsWith(homeDir.replace(/[\/\\]+$/, '') + '\\')) {
+        // We're not in a home subdirectory — could be an untrusted clone
+        console.error(`\n\u26a0\ufe0f  Loading project instructions from: ${filePath}`);
+        console.error(`   If you cloned this repo from an untrusted source, these`);
+        console.error(`   instructions could influence the agent's behavior.\n`);
+      }
       projectContext += `\n\n## Project Instructions (from ${file})\n${content}`;
     } catch { /* skip unreadable files */ }
     break; // only load the first one found
@@ -199,22 +209,26 @@ const agent = new Agent({
   provider,
   systemPrompt,
   cwd,
-  maxToolLoops: 200, // generous but not infinite
-  toolTimeout: 0,  // no timeout
+  maxToolLoops: 100, // generous but bounded
+  toolTimeout: 120000,  // 120s per tool call — prevents hangs
 });
 
 // ── Wire up sub-agent manager ──
-// Sub-agents inherit permission checks — sandbox enforced, confirmable actions auto-denied
-const subPermissions = new Permissions({ mode: initialMode, cwd: initialSandbox ? cwd : undefined });
-if (initialSandbox) { subPermissions.toggleSandbox(); subPermissions.setJailDir(cwd); }
+// Sub-agents share the SAME permissions object as the main agent.
+// This way, when the user changes mode mid-session via /mode, sub-agents
+// immediately see the new mode — no desync.
+const permissions = new Permissions({ mode: initialMode, cwd: initialSandbox ? cwd : undefined });
+if (initialSandbox) { permissions.toggleSandbox(); permissions.setJailDir(cwd); }
 
 const subAgentManager = new SubAgentManager({
-  apiKey: provider.apiKey,
+  apiKey: provider.getApiKeyForSubAgent(),
   cwd,
   basePrompt: systemPrompt + '\n\nIMPORTANT: You are a sub-agent. If a tool is denied due to permissions, report what you needed to do back to the main agent so it can handle it with user approval.',
   requestPermission: (toolName: string, args: Record<string, any>) => {
-    const check = subPermissions.check(toolName, args);
+    // Uses the shared permissions object — always in sync with current mode
+    const check = permissions.check(toolName, args);
     if (!check.allowed) return Promise.resolve(false);
+    // Sub-agents auto-deny anything that needs confirmation (no interactive prompt)
     if (check.needsConfirm) return Promise.resolve(false);
     return Promise.resolve(true);
   },
@@ -225,9 +239,7 @@ setSubAgentManager(subAgentManager);
 loadMCPServers(cwd).catch(() => {});
 
 // ── Start the REPL ──
-const permissions = new Permissions({ mode: initialMode, cwd: initialSandbox ? cwd : undefined });
-if (initialSandbox) { permissions.toggleSandbox(); permissions.setJailDir(cwd); }
-
+// NOTE: permissions object is shared with sub-agent manager (defined above)
 startRepl({
   agent,
   modelAlias: modelArg,
