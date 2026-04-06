@@ -11,6 +11,7 @@ import { SubAgentManager } from '../src/core/subagent.js';
 import { setSubAgentManager } from '../src/tools/subagent-tool.js';
 import { Permissions } from '../src/permissions/permissions.js';
 import { loadConfig, setConfigValue } from '../src/core/config.js';
+import { isPro } from '../src/core/license.js';
 
 // Load saved config
 const savedConfig = loadConfig();
@@ -125,10 +126,10 @@ if (existsSync(memoryFile)) {
   } catch { /* skip malformed memory */ }
 }
 
-// ── Load skills ──
+// ── Load skills (Pro only) ──
 ensureSkillsDirs();
-const skills = loadSkills(cwd);
-const skillsContext = getSkillsContext(skills);
+const skills = isPro() ? loadSkills(cwd) : [];
+const skillsContext = isPro() ? getSkillsContext(skills) : '';
 
 // ── Build system prompt ──
 const provider = new Provider({ model: modelArg });
@@ -203,7 +204,7 @@ Use the 'memory' tool to remember:
 Memories persist across sessions in ~/.grok-code/data/memory.json
 
 Current working directory: ${cwd}
-${projectContext}${memoryContext}${skillsContext}`;
+${projectContext}${memoryContext}${skillsContext}${!isPro() ? '\n\n## Pro Features\nThe Skills system, Sub-agent dispatch, YOLO mode, Sandbox mode, and extra companions require a Pro license ($5 one-time). If the user asks about these, explain the feature and tell them to upgrade at: https://grok-code-checkout.kevdogg102396.workers.dev then activate with /activate <key>' : ''}`;
 
 const agent = new Agent({
   provider,
