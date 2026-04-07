@@ -1,16 +1,25 @@
 # Grok-Code v2.0.0
 
-> **The autonomous AI coding agent powered by xAI's Grok. One command. Full capability.**
+> **An autonomous coding agent that actually uses tools, edits files, runs commands, and finishes the job.**
 
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![Built with Bun](https://img.shields.io/badge/Built%20with-Bun-f471b6)](https://bun.sh)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0+-3178c6)](https://www.typescriptlang.org)
 
-Grok-Code is not a chatbot wrapper. It's a **fully autonomous coding agent** that reads files, writes code, executes bash, searches the web, integrates MCP servers, dispatches sub-agents, and learns from its own work. Powered by xAI's Grok models with 2M token context windows at $0.20/M tokens — the cheapest frontier-class agent on the market.
+Grok-Code is not a chatbot wrapper. It's a **real coding agent**: it reads your files, writes code, runs bash, searches the web, plugs into MCP servers, and works through tasks end-to-end instead of stopping at suggestions.
+
+**Why people try it:**
+- Actually edits the codebase instead of just talking about it
+- Runs commands, tests, and debugging steps on your machine
+- Handles big repos with Grok Fast's 2M-token context window
+- Keeps memory across sessions so it gets less forgetful over time
+- Ships as a single CLI with no Python, Docker, or runtime mess
 
 ```
-You → grok-code CLI → Grok 4.20 / Reason / Fast → Your codebase (read, write, execute, debug)
+You → grok-code → reads files → writes code → runs commands → verifies changes
 ```
+
+If you want Claude Code / Codex-style workflow with Grok models and more autonomy, this is that.
 
 ---
 
@@ -40,22 +49,29 @@ grok
 ## Quick Start
 
 ```bash
-grok                           # Auto mode (asks before major actions)
-grok --yolo                    # Full send (no permission prompts, for the bold)
-grok --sandbox                 # Lock to current folder (safe for untrusted tasks)
-grok --yolo --sandbox          # YOLO but jailed
-grok --model fast              # Use Grok Fast (cheapest)
-grok --model reason            # Use Grok Reason (deepest thinking)
-grok --no-splash               # Skip the rainbow gradient intro
+grok                           # Auto mode: asks before bigger actions
+grok --yolo                    # Full send: minimal friction, maximum momentum
+grok --sandbox                 # Stay locked to the current folder
+grok --yolo --sandbox          # Fast and contained
+grok --model fast              # Cheapest daily-driver model
+grok --model reason            # Deep thinking for hard problems
+grok --no-splash               # Skip the intro animation
 ```
 
-<!-- TODO: Add demo GIF -->
+### 30-second demo prompts
+
+```text
+> find the failing test and fix it
+> add a dark mode toggle to this app and make it look good
+> refactor this file into smaller modules without breaking imports
+> audit this repo for security issues and patch the obvious ones
+```
 
 ---
 
 ## What Makes Grok-Code Different
 
-Most CLI agents are wrappers around chat models. Grok-Code is an **autonomous agent with real tools**.
+Most CLI tools feel like chat in a trench coat. Grok-Code is an **autonomous agent with real tools**.
 
 | Feature | Grok-Code | Other CLI Agents |
 |---------|-----------|------------------|
@@ -70,11 +86,11 @@ Most CLI agents are wrappers around chat models. Grok-Code is an **autonomous ag
 | Single binary, no runtime deps | Yes | No |
 | 2M token context window | Yes | No |
 
-**Grok's Unique Advantages:**
-- Real-time X/Twitter integration — search posts, trends, live conversations
-- Minimal hallucination — Grok 4 models are benchmarked for factual accuracy
-- Agentic-first design — Grok models are optimized for tool calling
-- Actual autonomy — does what you ask without refusals (pair with Playwright MCP for uncensored automation)
+**Why it hits different:**
+- Real-time X/Twitter integration for live search and current context
+- Agentic-first model behavior tuned for tool use
+- High-context workflows without constantly losing the plot
+- Strong autonomy for builders who want action, not hand-holding
 
 ---
 
@@ -150,17 +166,17 @@ Use Zyx (curious). Ask questions before big changes.
 
 ---
 
-## Models & Pricing
+## Models
 
-All three models access Grok's Live Search for real-time data.
+All three models can use Grok's Live Search for real-time data.
 
 | Model | Context | Cost (in/out per 1M) | Speed | Best for |
 |-------|---------|-----|------|----------|
-| **Grok 4.20 Fast** (default) | 2M tokens | $0.20 / $0.50 | ⚡ Very fast | Massive codebases, daily driver, cost-conscious |
-| **Grok 4.20 Reason** | 256K tokens | $1.00 / $5.00 | 🤔 Slow-thinking | Complex architecture, debugging, planning |
-| **Grok 4.20 Standard** | 256K tokens | $5.00 / $15.00 | 🚀 Fast | General purpose, most balanced |
+| **Grok 4.20 Fast** (default) | 2M tokens | $0.20 / $0.50 | ⚡ Very fast | Massive repos, everyday coding, cheap iterations |
+| **Grok 4.20 Reason** | 256K tokens | $1.00 / $5.00 | 🤔 Deliberate | Complex debugging, architecture, planning |
+| **Grok 4.20 Standard** | 256K tokens | $5.00 / $15.00 | 🚀 Fast | General-purpose work, balanced performance |
 
-**Cost per session:** Most coding tasks cost < $0.01 on Grok 4.20 Fast.
+**Typical cost:** Most coding sessions on Grok Fast are tiny.
 
 ---
 
@@ -428,16 +444,11 @@ Grok-Code looks for `mcp.json` in:
 
 ## Activation
 
-Some setups may support optional activation for expanded access to companions and advanced capabilities.
+Grok-Code works out of the box with core tools, permission modes, MCP integration, model switching, and persistent memory.
 
-Included out of the box:
-- Core tools (all 14)
-- All permission modes
-- MCP integration
-- Model switching
-- Persistent memory
+Some environments may also support optional activation for expanded access to advanced capabilities.
 
-If you want to check your current status, use:
+To check your current status, run:
 
 ```bash
 /activate
@@ -517,7 +528,7 @@ Grok-Code v2 is licensed under **Apache 2.0**. See [LICENSE](LICENSE).
 
 ## Built By
 
-[ClawdWorks](https://github.com/kevdogg102396-afk/grok-code) — AI agents for developers.
+[ClawdWorks](https://github.com/kevdogg102396-afk/grok-code) — building sharp, useful AI agents for real work.
 
 ---
 
@@ -532,4 +543,10 @@ Grok-Code v2 is licensed under **Apache 2.0**. See [LICENSE](LICENSE).
 
 **Questions?** Reach out on [X/Twitter](https://twitter.com) or [GitHub Discussions](https://github.com/kevdogg102396-afk/grok-code/discussions).
 
-**Try it now:** `grok`
+## Bottom Line
+
+If you want an AI coding tool that actually uses your filesystem, shell, web, and MCP stack instead of just generating nice-sounding advice, run:
+
+```bash
+grok
+```
