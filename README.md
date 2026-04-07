@@ -65,8 +65,8 @@ Most CLI agents are wrappers around chat models. Grok-Code is an **autonomous ag
 | MCP server integration | Yes | Rarely |
 | Model switching mid-session | Yes | No |
 | Persistent memory across sessions | Yes | No |
-| Sub-agent dispatch | Yes (Pro) | No |
-| Skills system (.md files) | Yes (Pro) | No |
+| Sub-agent dispatch | Yes | No |
+| Skills system (.md files) | Yes | No |
 | Single binary, no runtime deps | Yes | No |
 | 2M token context window | Yes | No |
 
@@ -224,7 +224,7 @@ Grok-Code will:
 /mode [auto|manual|yolo]         Change permission mode
 /companion [zyx|bolt|meni|goop]  Change personality
 /about             Info about Grok-Code
-/activate          Upgrade to Pro
+/activate          Show activation status and options
 /stats             Token usage this session
 /reset             Clear session memory (keep files)
 /quit              Exit
@@ -298,7 +298,7 @@ Popular MCP servers:
 
 ---
 
-## Skills System (Pro)
+## Skills System
 
 Create reusable tasks as `.md` files in `~/.grok-code/skills/`.
 
@@ -328,7 +328,7 @@ Grok-Code will:
 
 ---
 
-## Sub-Agent Dispatch (Pro)
+## Sub-Agent Dispatch
 
 Send specialized tasks to different models. Example:
 
@@ -426,23 +426,22 @@ Grok-Code looks for `mcp.json` in:
 
 ---
 
-## Pro Version ($5 one-time)
+## Activation
 
-Unlock everything:
-- ✅ All 4 companions (Zyx, Bolt, Meni, Goop)
-- ✅ All personalities (default, unhinged, professional, custom)
-- ✅ Sub-agent dispatch (send tasks to different models)
-- ✅ Skills system (.md files in ~/.grok-code/skills/)
-- ✅ Priority support
-- ✅ Early access to new models/tools
+Some setups may support optional activation for expanded access to companions and advanced capabilities.
 
-**Get Pro:** https://github.com/kevdogg102396-afk/grok-code
-
-Free version includes:
-- 1 companion (picked on first launch)
+Included out of the box:
 - Core tools (all 14)
 - All permission modes
 - MCP integration
+- Model switching
+- Persistent memory
+
+If you want to check your current status, use:
+
+```bash
+/activate
+```
 
 ---
 

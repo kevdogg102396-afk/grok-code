@@ -126,10 +126,13 @@ if (existsSync(memoryFile)) {
   } catch { /* skip malformed memory */ }
 }
 
-// ── Load skills (Pro only) ──
+// ── Load optional advanced features ──
 ensureSkillsDirs();
 const skills = isPro() ? loadSkills(cwd) : [];
 const skillsContext = isPro() ? getSkillsContext(skills) : '';
+const advancedFeaturesHint = !isPro()
+  ? '\n\n## Advanced Features\nSome advanced capabilities may require activation depending on your setup. If a command is unavailable, tell the user it may need activation and point them to /activate for details.'
+  : '';
 
 // ── Build system prompt ──
 const provider = new Provider({ model: modelArg });
@@ -204,7 +207,7 @@ Use the 'memory' tool to remember:
 Memories persist across sessions in ~/.grok-code/data/memory.json
 
 Current working directory: ${cwd}
-${projectContext}${memoryContext}${skillsContext}${!isPro() ? '\n\n## Pro Features\nThe Skills system, Sub-agent dispatch, YOLO mode, Sandbox mode, and extra companions require a Pro license ($5 one-time). If the user asks about these, explain the feature and tell them to upgrade at: https://grok-code-checkout.kevdogg102396.workers.dev then activate with /activate <key>' : ''}`;
+${projectContext}${memoryContext}${skillsContext}${advancedFeaturesHint}`;
 
 const agent = new Agent({
   provider,
