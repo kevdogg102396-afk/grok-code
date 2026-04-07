@@ -58,6 +58,14 @@ grok --model reason            # Deep thinking for hard problems
 grok --no-splash               # Skip the intro animation
 ```
 
+## Watch It Run
+
+**32-second demo:** prompt → Grok writes code → launches the page → result is live.
+
+[![Watch Grok-Code build and launch a landing page in 32 seconds](https://img.youtube.com/vi/pnEvQ4LAfoM/maxresdefault.jpg)](https://www.youtube.com/watch?v=pnEvQ4LAfoM)
+
+If you want a looping teaser for socials or docs, the first ~4 seconds are the money shot: typing `grok` in the terminal and the splash screen kicking in.
+
 ### 30-second demo prompts
 
 ```text
