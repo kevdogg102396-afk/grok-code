@@ -20,6 +20,9 @@ import { basename } from 'path';
 
 const gradient = gradientString(...gradientColors.splash);
 
+// Footer state — tracks height so we can erase it before new content
+let lastFooterHeight = 0;
+
 // ── Colors ──
 const c = {
   prompt: chalk.hex(colors.success).bold,
@@ -67,7 +70,7 @@ export async function startRepl(config: ReplConfig): Promise<void> {
   }
 
   // ── Footer ──
-  printFooter(agent, currentMode, isSandboxed, modelAlias);
+  drawFooter(agent, currentMode, isSandboxed, modelAlias, companionId, 'idle');
 
   // ── Main loop ──
   const promptUser = () => {
@@ -78,6 +81,7 @@ export async function startRepl(config: ReplConfig): Promise<void> {
 
       // ── Slash commands ──
       if (trimmed.startsWith('/')) {
+        eraseLastFooter(calcInputLines(trimmed));
         const [cmd, ...rest] = trimmed.slice(1).split(' ');
         const arg = rest.join(' ');
         const handled = await handleCommand(cmd, arg, agent, permissions, currentMode, isSandboxed, companionId, modelAlias,
@@ -86,12 +90,13 @@ export async function startRepl(config: ReplConfig): Promise<void> {
           (cid) => { companionId = cid; }
         );
         if (handled === 'quit') { rl.close(); process.exit(0); }
-        printFooter(agent, currentMode, isSandboxed, modelAlias);
+        drawFooter(agent, currentMode, isSandboxed, modelAlias, companionId, 'idle');
         promptUser();
         return;
       }
 
       // ── Run agent ──
+      eraseLastFooter(calcInputLines(trimmed));
       console.log(''); // blank line before response
 
       let currentStream = '';
@@ -116,17 +121,50 @@ export async function startRepl(config: ReplConfig): Promise<void> {
       };
 
       let toolCount = 0;
-      let shownWorking = false;
-      (agent as any).onToolStart = (name: string) => {
+      let lastToolEvent: 'idle' | 'toolStart' | 'toolDone' | 'error' = 'idle';
+      (agent as any).onToolStart = (name: string, args: Record<string, any>) => {
         toolCount++;
-        // Show a single "working" line on first tool call only
-        if (!shownWorking) {
-          console.log(c.dim('⚡ Working...'));
-          shownWorking = true;
+        lastToolEvent = 'toolStart';
+        // Show each tool as it fires with a brief args preview
+        let preview = '';
+        if (name === 'bash' && args.command) {
+          preview = args.command.length > 60 ? args.command.slice(0, 57) + '...' : args.command;
+        } else if (name === 'read' && args.file_path) {
+          preview = args.file_path;
+        } else if (name === 'write' && args.file_path) {
+          preview = args.file_path;
+        } else if (name === 'edit' && args.file_path) {
+          preview = args.file_path;
+        } else if (name === 'glob' && args.pattern) {
+          preview = args.pattern;
+        } else if (name === 'grep' && args.pattern) {
+          preview = args.pattern;
+        } else if (name === 'web_search' && args.query) {
+          preview = args.query;
+        } else if (name === 'web_fetch' && args.url) {
+          preview = args.url.length > 50 ? args.url.slice(0, 47) + '...' : args.url;
+        } else {
+          // Generic: show first string arg
+          const firstStr = Object.values(args).find(v => typeof v === 'string') as string | undefined;
+          if (firstStr) preview = firstStr.length > 50 ? firstStr.slice(0, 47) + '...' : firstStr;
         }
+        const line = preview
+          ? `  ${c.dim('⚡')} ${c.primary(name)} ${c.muted(preview)}`
+          : `  ${c.dim('⚡')} ${c.primary(name)}`;
+        process.stdout.write(line + '\r\n');
       };
 
-      (agent as any).onToolEnd = () => {};
+      (agent as any).onToolEnd = (name: string, result: any) => {
+        if (result?.error) {
+          lastToolEvent = 'error';
+          process.stdout.write(`  ${c.error('✗')} ${c.dim(name)} ${c.error(typeof result.error === 'string' ? result.error.slice(0, 60) : 'failed')}\r\n`);
+        } else {
+          lastToolEvent = 'toolDone';
+          const outLen = result?.output?.length || 0;
+          const sizeHint = outLen > 1000 ? ` ${c.muted(`(${(outLen / 1024).toFixed(1)}KB)`)}` : '';
+          process.stdout.write(`  ${c.secondary('✓')} ${c.dim(name)}${sizeHint}\r\n`);
+        }
+      };
 
       (agent as any).onUsage = () => {};
 
@@ -180,16 +218,9 @@ export async function startRepl(config: ReplConfig): Promise<void> {
         console.log(c.dim(`  ⚡ ${toolCount} tool${toolCount > 1 ? 's' : ''} used`));
       }
 
-      // Show companion quip
-      const companion = COMPANIONS[companionId];
-      if (companion && result.error) {
-        console.log(c.dim(`  ${companion.name}: ${getRandomQuip(companion, 'error')}`));
-      } else if (companion && result.text) {
-        console.log(c.dim(`  ${companion.name}: ${getRandomQuip(companion, 'toolDone')}`));
-      }
-
-      console.log('');
-      printFooter(agent, currentMode, isSandboxed, modelAlias);
+      // Footer with buddy — event reflects what just happened
+      const footerEvent = result.error ? 'error' : toolCount > 0 ? 'toolDone' : 'idle';
+      drawFooter(agent, currentMode, isSandboxed, modelAlias, companionId, footerEvent as any);
       promptUser();
     });
   };
@@ -223,19 +254,94 @@ function showSplash(model: string): void {
   console.log('');
 }
 
-// ── Footer (clean, no dividers) ──
-function printFooter(agent: Agent, mode: string, sandboxed: boolean, modelAlias: string): void {
+// ── Footer: erase previous, draw new, stays at bottom ──
+const stripAnsi = (s: string) => s.replace(/\x1b\[[0-9;]*m/g, '');
+
+function calcInputLines(input: string): number {
+  const cols = process.stdout.columns || 80;
+  const promptLen = 2; // "❯ " = 2 visual chars
+  return Math.ceil((promptLen + input.length) / cols) || 1;
+}
+
+function eraseLastFooter(inputLines: number = 1): void {
+  if (lastFooterHeight <= 0) return;
+  // Move up past input line(s) + footer, delete footer lines, move back past input
+  const totalUp = lastFooterHeight + inputLines;
+  process.stdout.write(`\x1b[${totalUp}A`);
+  for (let i = 0; i < lastFooterHeight; i++) {
+    process.stdout.write('\x1b[M'); // delete line, content below shifts up
+  }
+  process.stdout.write(`\x1b[${inputLines}B`);
+  lastFooterHeight = 0;
+}
+
+function drawFooter(
+  agent: Agent, mode: string, sandboxed: boolean, modelAlias: string,
+  companionId?: string, event?: 'idle' | 'toolStart' | 'toolDone' | 'error',
+): void {
+  const lines = buildFooterBox(agent, mode, sandboxed, modelAlias, companionId, event);
+  for (const line of lines) {
+    process.stdout.write(line + '\r\n');
+  }
+  lastFooterHeight = lines.length;
+}
+
+function buildFooterBox(
+  agent: Agent, mode: string, sandboxed: boolean, modelAlias: string,
+  companionId?: string, event?: 'idle' | 'toolStart' | 'toolDone' | 'error',
+): string[] {
   const stats = agent.stats;
   const cost = calculateCost(modelAlias, { prompt_tokens: stats.usage.prompt_tokens, completion_tokens: stats.usage.completion_tokens });
   const modeColor = mode === 'yolo' ? c.error : mode === 'manual' ? c.warning : c.secondary;
+  const bdr = chalk.hex(colors.primary);
 
   let gradTitle: string;
   try { gradTitle = gradient('GROK CODE'); } catch { gradTitle = 'GROK CODE'; }
 
-  // Single clean line — no dividers, just the info
-  process.stdout.write('\r\n');
-  console.log(`${gradTitle} ${c.dim('│')} ${c.primary.bold(stats.modelName)} ${c.dim('│')} ${c.muted(`↑${formatTokenCount(stats.usage.prompt_tokens)} ↓${formatTokenCount(stats.usage.completion_tokens)}`)} ${c.dim('│')} ${c.warning(formatCost(cost))} ${c.dim('│')} ${modeColor(mode.toUpperCase())}${sandboxed ? c.warning(' 🔒') : ''} ${c.dim('│')} ${c.muted(basename(process.cwd()))}`);
-  console.log('');
+  const w = Math.min(process.stdout.columns || 80, 120);
+
+  // Get buddy frame
+  const companion = companionId ? COMPANIONS[companionId] : null;
+  let buddyLines: string[] = [];
+  let quip = '';
+  if (companion && companion.frames.length > 0) {
+    const frameIdx = event === 'error' ? 1 : event === 'toolDone' ? 3 : 0;
+    buddyLines = companion.frames[frameIdx % companion.frames.length];
+    quip = event && event !== 'idle'
+      ? getRandomQuip(companion, event)
+      : getRandomQuip(companion, 'idle');
+  }
+
+  // Content rows
+  const statsLine = `${c.primary.bold(stats.modelName)} ${c.dim('│')} ${c.muted(`↑${formatTokenCount(stats.usage.prompt_tokens)} ↓${formatTokenCount(stats.usage.completion_tokens)}`)} ${c.dim('│')} ${c.warning(formatCost(cost))} ${c.dim('│')} ${modeColor(mode.toUpperCase())}${sandboxed ? c.warning(' 🔒') : ''} ${c.dim('│')} ${c.muted(basename(process.cwd()))}`;
+  const quipLine = companion && quip
+    ? c.dim(`${companion.name}: `) + chalk.hex(companion.color).italic(quip.length > 40 ? quip.slice(0, 37) + '...' : quip)
+    : '';
+
+  const contentRows = [gradTitle, '', statsLine, quipLine];
+
+  // Compose line with right border forced to exact column via ANSI cursor
+  function composeLine(content: string, buddy: string | null): string {
+    const cLen = stripAnsi(content).length;
+    const bLen = buddy ? stripAnsi(buddy).length : 0;
+    const gap = Math.max(1, w - cLen - bLen - 4);
+    let line = bdr('│') + ' ' + content + ' '.repeat(gap);
+    if (buddy) line += buddy;
+    // Force right border to exact column w — guarantees alignment
+    line += `\x1b[${w}G` + bdr('│');
+    return line;
+  }
+
+  const maxRows = Math.max(contentRows.length, buddyLines.length);
+  const lines: string[] = [];
+  lines.push(bdr('╭' + '─'.repeat(w - 2) + '╮'));
+  for (let i = 0; i < maxRows; i++) {
+    const content = i < contentRows.length ? contentRows[i] : '';
+    const buddy = i < buddyLines.length ? buddyLines[i] : null;
+    lines.push(composeLine(content, buddy));
+  }
+  lines.push(bdr('╰' + '─'.repeat(w - 2) + '╯'));
+  return lines;
 }
 
 // ── Character Picker ──
