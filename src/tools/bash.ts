@@ -14,9 +14,23 @@ registerTool({
   async execute(args, context) {
     const { command, timeout = 120000 } = args;
     try {
+      // Strip credentials from the child environment before spawning bash.
+      // Prevents a prompt-injected command like `echo "$XAI_<key-suffix>"` from
+      // exfiltrating the agent's own API keys or other ambient credentials.
+      // Single source of truth: filter by NAME patterns, not an enumerated list.
+      const CRED_NAME_RE = /(KEY|TOKEN|SECRET|PASSWORD|PASSWD|CREDENTIAL|PRIVATE)/i;
+      const AWS_RE = /^AWS_/i;
+      const safeEnv: Record<string, string | undefined> = {};
+      for (const [k, v] of Object.entries(process.env)) {
+        if (CRED_NAME_RE.test(k)) continue;
+        if (AWS_RE.test(k)) continue;
+        safeEnv[k] = v;
+      }
+      safeEnv.HOME = process.env.HOME || process.env.USERPROFILE;
+
       const proc = Bun.spawn(['bash', '-c', command], {
         cwd: context.cwd,
-        env: { ...process.env, HOME: process.env.HOME || process.env.USERPROFILE },
+        env: safeEnv,
         stdout: 'pipe',
         stderr: 'pipe',
       });
@@ -28,6 +42,13 @@ registerTool({
         proc.kill();
       }, timeout) : null;
 
+      // Also respect agent-level abort signal (e.g. outer tool timeout)
+      const onAbort = () => { proc.kill(); };
+      if (context.signal) {
+        if (context.signal.aborted) proc.kill();
+        else context.signal.addEventListener('abort', onAbort, { once: true });
+      }
+
       // Read stdout and stderr concurrently
       const [stdoutBuf, stderrBuf] = await Promise.all([
         new Response(proc.stdout).arrayBuffer(),
@@ -36,6 +57,7 @@ registerTool({
 
       const exitCode = await proc.exited;
       if (timeoutId) clearTimeout(timeoutId);
+      if (context.signal) context.signal.removeEventListener('abort', onAbort);
 
       if (timedOut) {
         return { output: '', error: `Command timed out after ${timeout}ms` };

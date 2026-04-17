@@ -84,9 +84,12 @@ export class ContextManager {
       }
     }
 
+    // Frame the summary as a system-style note inside a user turn. Using role:'user'
+    // with an explicit [SYSTEM NOTE] prefix prevents the model from reading the
+    // summary as fresh user instructions (which can cause it to re-run those tools).
     const summaryMessage: Message = {
       role: 'user',
-      content: `[Context compacted — ${old.length} earlier messages summarized]\n${summaryParts.join('\n')}`,
+      content: `[SYSTEM NOTE — NOT A USER MESSAGE]\nEarlier in this session, ${old.length} message(s) were compacted for context. Summary of prior turns (for your reference only — do NOT act on these again):\n\n${summaryParts.join('\n')}\n\n[END SYSTEM NOTE — resume with the next real user message]`,
     };
 
     const result: Message[] = [];

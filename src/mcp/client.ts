@@ -78,6 +78,10 @@ export class MCPClient {
       }
     } catch {
       // Process ended
+    } finally {
+      // Stdout closed — child is gone. Reject anything still in flight so
+      // callers don't have to wait for their per-request 30s timeout.
+      this.checkProcessAlive();
     }
   }
 
@@ -102,6 +106,25 @@ export class MCPClient {
     }
   }
 
+  /** Check if the MCP child process is still alive. If it died, reject every
+   *  pending request and mark the client disconnected so callers stop queueing. */
+  private checkProcessAlive(): boolean {
+    if (!this.process) return false;
+    if (this.process.exitCode !== null) {
+      // Process died — fail fast instead of waiting 30s for every request to time out
+      if (this.connected) {
+        this.connected = false;
+        for (const [, pending] of this.pendingRequests) {
+          clearTimeout(pending.timer);
+          pending.reject(new Error(`MCP server "${this.config.name}" exited (code ${this.process.exitCode})`));
+        }
+        this.pendingRequests.clear();
+      }
+      return false;
+    }
+    return true;
+  }
+
   private async send(method: string, params: Record<string, any> = {}): Promise<any> {
     const id = this.nextId++;
     const request: MCPRequest = {
@@ -112,6 +135,11 @@ export class MCPClient {
     };
 
     return new Promise((resolve, reject) => {
+      if (!this.checkProcessAlive()) {
+        reject(new Error(`MCP server "${this.config.name}" is not running`));
+        return;
+      }
+
       // Set timeout with cleanup — timer reference stored so handleLine can clear it
       const timer = setTimeout(() => {
         if (this.pendingRequests.has(id)) {
@@ -122,13 +150,24 @@ export class MCPClient {
 
       this.pendingRequests.set(id, { resolve, reject, timer });
       const data = JSON.stringify(request) + '\n';
-      (this.process?.stdin as import('bun').FileSink | undefined)?.write(data);
+      try {
+        (this.process?.stdin as import('bun').FileSink | undefined)?.write(data);
+      } catch (err: any) {
+        clearTimeout(timer);
+        this.pendingRequests.delete(id);
+        reject(new Error(`Failed to write to MCP server "${this.config.name}": ${err.message}`));
+      }
     });
   }
 
   private sendNotification(method: string, params: Record<string, any> = {}): void {
-    const msg: MCPRequest = { jsonrpc: '2.0', method, params };
-    (this.process?.stdin as import('bun').FileSink | undefined)?.write(JSON.stringify(msg) + '\n');
+    if (!this.checkProcessAlive()) return;
+    try {
+      const msg: MCPRequest = { jsonrpc: '2.0', method, params };
+      (this.process?.stdin as import('bun').FileSink | undefined)?.write(JSON.stringify(msg) + '\n');
+    } catch {
+      // Notification is fire-and-forget; if the server died we'll catch it on next send()
+    }
   }
 
   async callTool(name: string, args: Record<string, any>): Promise<string> {

@@ -169,21 +169,35 @@ export class Agent {
           }
         }
 
-        // Execute tool with timeout
+        // Execute tool with timeout — AbortController lets subprocess-based
+        // tools (bash, web_fetch, web_search) actually kill work on timeout
+        // instead of leaking orphan processes / hanging sockets.
         let result: ToolResult;
+        const abortController = new AbortController();
+        let timeoutHandle: ReturnType<typeof setTimeout> | null = null;
         try {
+          const execPromise = executeTool(toolName, args, {
+            cwd: this.cwd,
+            sessionId: this.sessionId,
+            signal: abortController.signal,
+          });
           if (this.toolTimeout > 0) {
             result = await Promise.race([
-              executeTool(toolName, args, { cwd: this.cwd, sessionId: this.sessionId }),
-              new Promise<ToolResult>((_, reject) =>
-                setTimeout(() => reject(new Error(`Tool timeout after ${this.toolTimeout}ms`)), this.toolTimeout)
-              ),
+              execPromise,
+              new Promise<ToolResult>((_, reject) => {
+                timeoutHandle = setTimeout(() => {
+                  abortController.abort();
+                  reject(new Error(`Tool timeout after ${this.toolTimeout}ms`));
+                }, this.toolTimeout);
+              }),
             ]);
           } else {
-            result = await executeTool(toolName, args, { cwd: this.cwd, sessionId: this.sessionId });
+            result = await execPromise;
           }
         } catch (err: any) {
           result = { output: '', error: `Tool execution error: ${err.message}` };
+        } finally {
+          if (timeoutHandle) clearTimeout(timeoutHandle);
         }
 
         // Track consecutive errors on same tool (prevent retry spam)
@@ -277,7 +291,37 @@ export class Agent {
   }
 
   importState(state: any) {
-    if (state?.messages) this.messages = state.messages;
-    if (state?.usage) this.totalUsage = state.usage;
+    // Validate the shape before importing — a corrupted or malicious state file
+    // could otherwise inject assistant messages with tool_calls that auto-execute
+    // on next turn, or crash the agent with a malformed message.
+    if (!state || typeof state !== 'object') return;
+
+    if (Array.isArray(state.messages)) {
+      const validRoles = new Set(['system', 'user', 'assistant', 'tool']);
+      const clean: Message[] = [];
+      for (const m of state.messages) {
+        if (!m || typeof m !== 'object') continue;
+        if (!validRoles.has(m.role)) continue;
+        const msg: any = { role: m.role };
+        if (typeof m.content === 'string' || Array.isArray(m.content)) msg.content = m.content;
+        if (m.role === 'tool' && typeof m.tool_call_id === 'string') msg.tool_call_id = m.tool_call_id;
+        if (m.role === 'assistant' && Array.isArray(m.tool_calls)) {
+          msg.tool_calls = m.tool_calls.filter((tc: any) =>
+            tc && typeof tc === 'object' && typeof tc.id === 'string' && tc.function?.name
+          );
+        }
+        clean.push(msg);
+      }
+      this.messages = clean;
+    }
+
+    if (state.usage && typeof state.usage === 'object' &&
+        typeof state.usage.prompt_tokens === 'number' &&
+        typeof state.usage.completion_tokens === 'number') {
+      this.totalUsage = {
+        prompt_tokens: state.usage.prompt_tokens,
+        completion_tokens: state.usage.completion_tokens,
+      };
+    }
   }
 }

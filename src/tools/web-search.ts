@@ -11,11 +11,21 @@ registerTool({
     },
     required: ['query'],
   },
-  async execute(args) {
+  async execute(args, context) {
     const maxResults = args.max_results || 8;
+    // 15s timeout so DDG slow-downs / network blocks can't hang the agent.
+    // Also honors agent-level abort signal (e.g. outer tool timeout).
+    const abortCtl = new AbortController();
+    const timeoutId = setTimeout(() => abortCtl.abort(), 15000);
+    const onOuterAbort = () => abortCtl.abort();
+    if (context?.signal) {
+      if (context.signal.aborted) abortCtl.abort();
+      else context.signal.addEventListener('abort', onOuterAbort, { once: true });
+    }
     try {
       const url = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(args.query)}`;
       const response = await fetch(url, {
+        signal: abortCtl.signal,
         headers: {
           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
         },
@@ -53,7 +63,13 @@ registerTool({
       }
       return { title: `search: ${args.query}`, output: results.join('\n\n') };
     } catch (err: any) {
+      if (err?.name === 'AbortError') {
+        return { output: '', error: `Search timed out or was aborted` };
+      }
       return { output: '', error: `Search failed: ${err.message}` };
+    } finally {
+      clearTimeout(timeoutId);
+      if (context?.signal) context.signal.removeEventListener('abort', onOuterAbort);
     }
   },
 });

@@ -3,6 +3,25 @@ import { resolve, join } from 'path';
 import { MCPClient } from './client.js';
 import type { MCPServerConfig } from './types.js';
 
+// Shared registry of active MCP clients — signal handlers below iterate this
+// at shutdown time so we can register the handlers exactly once and still
+// clean up clients from any number of loadMCPServers() calls.
+const activeClients: MCPClient[] = [];
+let signalHandlersRegistered = false;
+
+function registerSignalHandlers(): void {
+  if (signalHandlersRegistered) return;
+  signalHandlersRegistered = true;
+  const cleanup = () => {
+    for (const client of activeClients.splice(0)) {
+      try { client.disconnect(); } catch { /* best effort */ }
+    }
+  };
+  process.on('exit', cleanup);
+  process.on('SIGINT', () => { cleanup(); process.exit(0); });
+  process.on('SIGTERM', () => { cleanup(); process.exit(0); });
+}
+
 export async function loadMCPServers(cwd: string, options?: { onUntrustedConfig?: (path: string, servers: string[]) => Promise<boolean> }): Promise<MCPClient[]> {
   const clients: MCPClient[] = [];
   const homeDir = process.env.HOME || process.env.USERPROFILE || '.';
@@ -65,16 +84,11 @@ export async function loadMCPServers(cwd: string, options?: { onUntrustedConfig?
     }
   }
 
-  // Cleanup on exit — kill all MCP server processes
+  // Register shutdown hooks exactly once, regardless of how many times this
+  // function is called. New clients are added to the shared registry.
   if (clients.length > 0) {
-    const cleanup = () => {
-      for (const client of clients) {
-        try { client.disconnect(); } catch { /* best effort */ }
-      }
-    };
-    process.on('exit', cleanup);
-    process.on('SIGINT', () => { cleanup(); process.exit(0); });
-    process.on('SIGTERM', () => { cleanup(); process.exit(0); });
+    activeClients.push(...clients);
+    registerSignalHandlers();
   }
 
   return clients;

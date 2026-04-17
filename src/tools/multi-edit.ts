@@ -27,18 +27,38 @@ registerTool({
   async execute(args, context) {
     const filePath = resolve(context.cwd, args.file_path.replace(/^~/, process.env.HOME || process.env.USERPROFILE || ''));
     if (!existsSync(filePath)) return { output: '', error: `File not found: ${filePath}` };
+    if (!Array.isArray(args.edits) || args.edits.length === 0) {
+      return { output: '', error: 'edits must be a non-empty array' };
+    }
     try {
-      let content = readFileSync(filePath, 'utf-8');
+      const original = readFileSync(filePath, 'utf-8');
+      let content = original;
       const results: string[] = [];
+      const failures: string[] = [];
+
+      // All-or-nothing: apply every edit on a working copy. If ANY edit fails,
+      // discard the working copy and leave the file on disk untouched.
       for (let i = 0; i < args.edits.length; i++) {
         const { old_string, new_string } = args.edits[i];
+        if (typeof old_string !== 'string' || typeof new_string !== 'string') {
+          failures.push(`Edit ${i + 1}: old_string/new_string must be strings`);
+          continue;
+        }
         if (!content.includes(old_string)) {
-          results.push(`Edit ${i + 1}: old_string not found, skipped`);
+          failures.push(`Edit ${i + 1}: old_string not found`);
           continue;
         }
         content = content.replace(old_string, new_string);
         results.push(`Edit ${i + 1}: applied`);
       }
+
+      if (failures.length > 0) {
+        return {
+          output: '',
+          error: `Multi-edit aborted — no changes written. ${failures.length}/${args.edits.length} edit(s) failed:\n${failures.join('\n')}`,
+        };
+      }
+
       writeFileSync(filePath, content, 'utf-8');
       return { title: `multi_edit: ${args.file_path}`, output: results.join('\n') };
     } catch (err: any) {

@@ -18,6 +18,17 @@ export const DANGEROUS_PATTERNS: Array<{ pattern: RegExp; reason: string }> = [
   { pattern: /\bdrop\s+database\b/i, reason: 'Drop database' },
   { pattern: /\bdrop\s+table\b/i, reason: 'Drop table' },
   { pattern: /\btruncate\s+table\b/i, reason: 'Truncate table' },
+  // Credential exfiltration — prompt-injection commands often reference env vars directly
+  { pattern: /\$\{?(XAI|ANTHROPIC|OPENAI|NVIDIA|GEMINI|GOOGLE|STRIPE|GITHUB|TELEGRAM)_[A-Z_]*(KEY|TOKEN|SECRET|PASSWORD)/i, reason: 'References API key / secret env var' },
+  { pattern: /\b(printenv|env)\b(?!\s*\|\s*grep\s+-v)/, reason: 'Dumps environment variables' },
+  // Interpreter escapes — can read arbitrary files even under sandbox mode
+  { pattern: /\b(python|python3|node|bun|deno|ruby|perl|php)\s+-[ec]\b/, reason: 'Inline interpreter script (sandbox bypass risk)' },
+  // Network exfiltration — any outbound POST or file upload to unknown hosts
+  { pattern: /\bcurl\b.*--data/, reason: 'HTTP POST (possible data exfiltration)' },
+  { pattern: /\bcurl\b.*-[FTd]\b/, reason: 'HTTP file upload / POST data' },
+  { pattern: /\bwget\b.*--post/, reason: 'HTTP POST via wget' },
+  { pattern: /\b(nc|netcat|ncat)\b\s+.*\d+/, reason: 'Raw network connection (nc/netcat)' },
+  { pattern: /\bssh\b\s+.*@/, reason: 'Outbound SSH connection' },
 ];
 
 // Tools that always need permission (write operations)

@@ -21,6 +21,9 @@ export interface ToolDefinition {
 export interface ToolContext {
   cwd: string;
   sessionId?: string;
+  /** Optional abort signal — tools that spawn subprocesses or make network calls
+   *  should listen to this and clean up when aborted (e.g. on agent-level timeout). */
+  signal?: AbortSignal;
 }
 
 const tools = new Map<string, ToolDefinition>();
@@ -60,6 +63,9 @@ export async function executeTool(
   try {
     return await tool.execute(args, context);
   } catch (err: any) {
+    if (err?.name === 'AbortError') {
+      return { output: '', error: `Tool ${name} aborted (timeout or cancellation)` };
+    }
     return { output: '', error: `Tool ${name} failed: ${err.message}` };
   }
 }
