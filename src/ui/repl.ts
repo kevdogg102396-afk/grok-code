@@ -513,7 +513,8 @@ ${c.bold('Commands:')}
       if (!arg) {
         console.log('\nUsage: /activate <license-key>\nGet a key at: https://grok-code-checkout.kevdogg102396.workers.dev\n');
       } else {
-        const result = activateLicense(arg);
+        console.log('\nVerifying license with server…');
+        const result = await activateLicense(arg);
         console.log(`\n${result.message}\n`);
       }
       return;

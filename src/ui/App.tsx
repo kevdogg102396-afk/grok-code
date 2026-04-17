@@ -169,7 +169,8 @@ export function App({ agent, modelAlias, skipSplash, initialMode = 'auto', initi
           if (!arg) {
             setMessages(prev => [...prev, { role: 'assistant', content: 'Usage: /activate <license-key>\n\nGet a key at: https://github.com/kevdogg102396-afk/grok-code' }]);
           } else {
-            const result = activateLicense(arg);
+            setMessages(prev => [...prev, { role: 'assistant', content: 'Verifying license with server…' }]);
+            const result = await activateLicense(arg);
             setMessages(prev => [...prev, { role: 'assistant', content: result.message }]);
           }
           return;

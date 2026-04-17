@@ -4,6 +4,8 @@ import { createHash } from 'crypto';
 
 const CONFIG_DIR = join(process.env.HOME || process.env.USERPROFILE || '.', '.grok-code');
 const LICENSE_FILE = join(CONFIG_DIR, 'license.json');
+const VERIFY_URL = 'https://grok-code-checkout.kevdogg102396.workers.dev/api/verify';
+const VERIFY_TIMEOUT_MS = 10000;
 
 // License key format: GC-XXXXX-XXXXX-XXXXX-XXXXX
 // Validated with a checksum embedded in the key itself
@@ -14,6 +16,11 @@ interface LicenseData {
   key: string;
   activatedAt: string;
   tier: 'free' | 'pro';
+  /** Whether this key was verified against the server-side KV store. Keys
+   *  activated before server verification was added will lack this flag —
+   *  they're grandfathered as valid. */
+  verified?: boolean;
+  issuedAt?: string;
 }
 
 function ensureDir(): void {
@@ -50,11 +57,58 @@ export function loadLicense(): LicenseData {
   }
 }
 
-export function activateLicense(key: string): { success: boolean; message: string } {
+async function verifyKeyWithServer(key: string): Promise<{ valid: boolean; reason?: string; issuedAt?: string | null }> {
+  const ctl = new AbortController();
+  const t = setTimeout(() => ctl.abort(), VERIFY_TIMEOUT_MS);
+  try {
+    const res = await fetch(VERIFY_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key }),
+      signal: ctl.signal,
+    });
+    if (!res.ok) {
+      // 400 = bad format / bad json; 5xx = server error. Treat non-200 as network
+      // error so the user gets a retry path rather than a hard reject.
+      return { valid: false, reason: `server_${res.status}` };
+    }
+    const data: any = await res.json();
+    return { valid: !!data.valid, reason: data.reason, issuedAt: data.issuedAt };
+  } catch (err: any) {
+    return { valid: false, reason: err?.name === 'AbortError' ? 'timeout' : 'network_error' };
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+export async function activateLicense(key: string): Promise<{ success: boolean; message: string }> {
   const trimmed = key.trim().toUpperCase();
 
   if (!validateKeyFormat(trimmed)) {
     return { success: false, message: 'Invalid license key format. Keys look like: GC-XXXXX-XXXXX-XXXXX-XXXXX' };
+  }
+
+  // Server-side verification: the key must actually exist in our records.
+  // This is what prevents locally-generated forgeries from activating Pro.
+  const verification = await verifyKeyWithServer(trimmed);
+
+  if (!verification.valid) {
+    if (verification.reason === 'timeout' || verification.reason === 'network_error') {
+      return {
+        success: false,
+        message: 'Could not reach license server to verify your key. Check your internet and try again. If the issue persists, email kevin@clawdworks.com.',
+      };
+    }
+    if (verification.reason === 'not_issued') {
+      return {
+        success: false,
+        message: 'This license key was not found in our records. It may be a forgery, or it could be from before server verification was added. Email kevin@clawdworks.com with your Stripe receipt and we can fix it.',
+      };
+    }
+    return {
+      success: false,
+      message: `License verification failed (${verification.reason || 'unknown'}). Email kevin@clawdworks.com if this is wrong.`,
+    };
   }
 
   ensureDir();
@@ -62,6 +116,8 @@ export function activateLicense(key: string): { success: boolean; message: strin
     key: trimmed,
     activatedAt: new Date().toISOString(),
     tier: 'pro',
+    verified: true,
+    issuedAt: verification.issuedAt || undefined,
   };
   writeFileSync(LICENSE_FILE, JSON.stringify(data, null, 2), 'utf-8');
 
