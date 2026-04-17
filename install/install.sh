@@ -73,6 +73,11 @@ if [ -z "$XAI_API_KEY" ]; then
   exit 1
 fi
 
+if [[ ! "$XAI_API_KEY" =~ ^xai- ]]; then
+  echo "Warning: XAI_API_KEY doesn't start with 'xai-' — it may be invalid."
+  echo "If the next request 401s, double-check your key at https://console.x.ai/"
+fi
+
 exec bun run "$GROK_DIR/bin/grok-code.ts" "$@"
 LAUNCHER
 chmod +x "$BIN_DIR/grok"

@@ -33,7 +33,8 @@ export function loadConfig(): GrokCodeConfig {
 
 export function saveConfig(config: GrokCodeConfig): void {
   ensureDir();
-  writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2), 'utf-8');
+  // Mode 0o600 — config may hold an apiKey fallback, so keep it owner-only.
+  writeFileSync(CONFIG_FILE, JSON.stringify(config, null, 2), { encoding: 'utf-8', mode: 0o600 });
 }
 
 export function getConfigValue<K extends keyof GrokCodeConfig>(key: K): GrokCodeConfig[K] {

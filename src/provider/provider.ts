@@ -66,7 +66,11 @@ export class Provider {
     }
   }
 
-  /** Get the API key for creating sub-providers. Returns masked key for logging. */
+  /**
+   * Get the raw API key for creating sub-providers. Sub-agents need a real
+   * working key to talk to xAI; this is intentionally unmasked. Do not log
+   * or forward the return value anywhere else.
+   */
   getApiKeyForSubAgent(): string {
     return this._apiKey;
   }
