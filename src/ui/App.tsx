@@ -11,7 +11,7 @@ import { calculateCost } from '../util/cost.js';
 import { Permissions, type PermissionMode } from '../permissions/permissions.js';
 import { isFirstLaunch, getCompanionId, saveCompanionConfig } from '../core/companion-config.js';
 import { COMPANIONS, COMPANION_IDS } from './companions.js';
-import { isPro, activateLicense, requirePro } from '../core/license.js';
+import { activateLicense } from '../core/license.js';
 import { setConfigValue, loadConfig } from '../core/config.js';
 
 const savedConfig = loadConfig();
@@ -136,12 +136,6 @@ export function App({ agent, modelAlias, skipSplash, initialMode = 'auto', initi
             const available = COMPANION_IDS.map(id => `${id === companionId ? '\u25B6 ' : '  '}${COMPANIONS[id].name} (${id})`).join('\n');
             setMessages(prev => [...prev, { role: 'assistant', content: `Current companion: **${current.name}**\n\nAvailable:\n${available}\n\nSwitch with: /companion <${COMPANION_IDS.join('|')}>` }]);
           } else if (COMPANIONS[arg]) {
-            // Gate: only alien is free, rest are Pro
-            if (arg !== 'alien' && !isPro()) {
-              const gate = requirePro('Extra companions');
-              setMessages(prev => [...prev, { role: 'assistant', content: gate! }]);
-              return;
-            }
             setCompanionId(arg);
             saveCompanionConfig({ companionId: arg, firstLaunchComplete: true });
             const c = COMPANIONS[arg];
@@ -154,22 +148,20 @@ export function App({ agent, modelAlias, skipSplash, initialMode = 'auto', initi
         case 'help':
           setMessages(prev => [...prev, {
             role: 'assistant',
-            content: '**Commands:**\n- /help — this message\n- /about — version info, license status, support links\n- /activate <key> — activate Pro license\n- /model — switch model (standard, fast, reason)\n- /models — list all models\n- /mode — permission mode (manual, auto, yolo)\n- /mode sandbox — toggle folder jail\n- /companion — switch companion (Pro: all 4)\n- /stats — token usage\n- /reset — clear conversation\n- /quit — exit',
+            content: '**Commands:**\n- /help — this message\n- /about — version info and support links\n- /activate — legacy no-op; all features are free now\n- /model — switch model (standard, fast, reason, 4.3)\n- /models — list all models\n- /mode — permission mode (manual, auto, yolo)\n- /mode sandbox — toggle folder jail\n- /companion — switch companion\n- /stats — token usage\n- /reset — clear conversation\n- /quit — exit',
           }]);
           return;
         case 'about': {
-          const proStatus = isPro() ? '✅ Pro (activated)' : '🆓 Free';
           setMessages(prev => [...prev, {
             role: 'assistant',
-            content: `**GROK CODE v2.0.0** — ${proStatus}\nby ClawdWorks\n\nAutonomous AI coding agent powered by xAI's Grok.\n\n**Support the project:**\n☕ Buy me a coffee: https://buymeacoffee.com/clawdworks\n⭐ Star on GitHub: https://github.com/kevdogg102396-afk/grok-code\n\n${isPro() ? 'Thanks for being Pro! All features unlocked.' : '**Upgrade to Pro ($5 one-time):**\nAll companions, all personalities, sub-agents, skills.\nGet it at: https://github.com/kevdogg102396-afk/grok-code\nActivate: /activate <your-key>'}\n\nBuilt with ❤️ by Kevin Cline & Claude`,
+            content: `**GROK CODE v2.0.0** — Free, all features unlocked\nby ClawdWorks\n\nAutonomous AI coding agent powered by xAI's Grok.\n\n**Support the project:**\n☕ Buy me a coffee: https://buymeacoffee.com/clawdworks\n⭐ Star on GitHub: https://github.com/kevdogg102396-afk/grok-code\n\nBuilt with ❤️ by Kevin Cline & Claude`,
           }]);
           return;
         }
         case 'activate': {
           if (!arg) {
-            setMessages(prev => [...prev, { role: 'assistant', content: 'Usage: /activate <license-key>\n\nGet a key at: https://github.com/kevdogg102396-afk/grok-code' }]);
+            setMessages(prev => [...prev, { role: 'assistant', content: 'No activation needed anymore. All Grok-Code features are unlocked for everyone.\n\nSupport: https://buymeacoffee.com/clawdworks' }]);
           } else {
-            setMessages(prev => [...prev, { role: 'assistant', content: 'Verifying license with server…' }]);
             const result = await activateLicense(arg);
             setMessages(prev => [...prev, { role: 'assistant', content: result.message }]);
           }

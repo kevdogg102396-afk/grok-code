@@ -19,6 +19,11 @@ const DEFAULT_ROLES: Record<string, SubAgentRole> = {
     model: 'grok-4.20-reason',
     promptAddition: 'You are a reasoning sub-agent. Think deeply about architecture, edge cases, and correctness. Take your time.',
   },
+  latest: {
+    name: 'Grok 4.3 Coder',
+    model: 'grok-4.3',
+    promptAddition: 'You are a Grok 4.3 coding sub-agent. Focus on strong tool use, instruction following, and high-quality implementation.',
+  },
   standard: {
     name: 'General Coder',
     model: 'grok-4.20',

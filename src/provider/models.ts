@@ -18,6 +18,15 @@ export const MODELS: Record<string, ModelDefinition> = {
     costPer1kIn: 0.002,
     costPer1kOut: 0.010,
   },
+  'grok-4.3': {
+    id: 'grok-4.3',
+    name: 'Grok 4.3',
+    context: 1048576,
+    vision: 'xai',
+    reasoning: true,
+    costPer1kIn: 0.00125,
+    costPer1kOut: 0.0025,
+  },
   'grok-4.20-reason': {
     id: 'grok-4.20-0309-reasoning',
     name: 'Grok 4.20 Reason',
@@ -41,6 +50,9 @@ export const MODELS: Record<string, ModelDefinition> = {
 export const DEFAULT_MODEL = 'grok-4.20';
 export const MODEL_ALIASES: Record<string, string> = {
   'fast': 'grok-code-fast',
+  '4.3': 'grok-4.3',
+  'grok43': 'grok-4.3',
+  'latest': 'grok-4.3',
   'reason': 'grok-4.20-reason',
   'standard': 'grok-4.20',
   'default': 'grok-4.20',

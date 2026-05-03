@@ -55,6 +55,7 @@ grok --sandbox                 # Stay locked to the current folder
 grok --yolo --sandbox          # Fast and contained
 grok --model fast              # Cheapest daily-driver model
 grok --model reason            # Deep thinking for hard problems
+grok --model 4.3               # Newer Grok 4.3 option
 grok --no-splash               # Skip the intro animation
 ```
 
@@ -140,6 +141,7 @@ Each has a unique pixel-art animation and voice in error messages.
 /model fast      # Grok 4.20 Fast (2M ctx, $0.20/M, daily driver)
 /model reason    # Grok 4.20 Reason (256K ctx, $3.00/M, deep thinking)
 /model standard  # Grok 4.20 (256K ctx, $5.00/M, general purpose)
+/model 4.3       # Grok 4.3 (1M ctx, optional newer model)
 ```
 
 Switch anytime. Session context carries over.
@@ -176,13 +178,14 @@ Use Zyx (curious). Ask questions before big changes.
 
 ## Models
 
-All three models can use Grok's Live Search for real-time data.
+All models can use Grok's Live Search for real-time data.
 
 | Model | Context | Cost (in/out per 1M) | Speed | Best for |
 |-------|---------|-----|------|----------|
-| **Grok 4.20 Fast** (default) | 2M tokens | $0.20 / $0.50 | ⚡ Very fast | Massive repos, everyday coding, cheap iterations |
+| **Grok 4.20 Fast** | 2M tokens | $0.20 / $0.50 | ⚡ Very fast | Massive repos, everyday coding, cheap iterations |
+| **Grok 4.3** | 1M tokens | $1.25 / $2.50 | Fast | Newer agentic coding and instruction-following workflows |
 | **Grok 4.20 Reason** | 256K tokens | $1.00 / $5.00 | 🤔 Deliberate | Complex debugging, architecture, planning |
-| **Grok 4.20 Standard** | 256K tokens | $5.00 / $15.00 | 🚀 Fast | General-purpose work, balanced performance |
+| **Grok 4.20 Standard** (default) | 256K tokens | $5.00 / $15.00 | 🚀 Fast | General-purpose work, balanced performance |
 
 **Typical cost:** Most coding sessions on Grok Fast are tiny.
 
@@ -243,12 +246,12 @@ Grok-Code will:
 
 ```
 /help              Show all commands
-/model [fast|reason|standard]    Switch models
+/model [fast|reason|standard|4.3]    Switch models
 /models            Show current model + available models
 /mode [auto|manual|yolo]         Change permission mode
 /companion [zyx|bolt|meni|goop]  Change personality
-/about             Info about Grok-Code
-/activate          Show activation status and options
+/about             Info about Grok-Code and support links
+/activate          Legacy no-op; all features are free now
 /stats             Token usage this session
 /reset             Clear session memory (keep files)
 /quit              Exit
@@ -450,17 +453,16 @@ Grok-Code looks for `mcp.json` in:
 
 ---
 
-## Activation
+## Support
 
-Grok-Code works out of the box with core tools, permission modes, MCP integration, model switching, and persistent memory.
+Grok-Code works out of the box with core tools, permission modes, MCP integration, model switching, persistent memory, skills, companions, and sub-agents.
 
-Some environments may also support optional activation for expanded access to advanced capabilities.
+No paywall, no license key, no activation server. If Grok-Code saves you time, support is appreciated:
 
-To check your current status, run:
+- Buy Me a Coffee: https://buymeacoffee.com/clawdworks
+- Star the repo: https://github.com/kevdogg102396-afk/grok-code
 
-```bash
-/activate
-```
+The `/activate` command remains as a harmless legacy command for older installs/scripts.
 
 ---
 

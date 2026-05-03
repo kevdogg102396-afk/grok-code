@@ -49,7 +49,7 @@ GROK CODE v2.0.0 — AI Coding Agent by ClawdWorks
 Usage: grok-code [options]
 
 Options:
-  --model <alias>   Model: standard, fast, reason (default: standard)
+  --model <alias>   Model: standard, fast, reason, 4.3 (default: standard)
   --yolo            YOLO mode — no permission prompts, full send
   --manual          Manual mode — confirms every action
   --auto            Auto mode — safe actions auto, dangerous asks (default)
@@ -63,11 +63,13 @@ Examples:
   grok --yolo --sandbox       Full send but can't leave this folder
   grok --manual --sandbox     Confirm everything, locked to folder
   grok --model fast           Use cheapest model
+  grok --model 4.3            Use Grok 4.3
 
 Models:
   standard   Grok 4.20 (default, best all-around)
   fast       Grok Code Fast (cheapest, quick tasks)
   reason     Grok 4.20 Reason (complex problems)
+  4.3        Grok 4.3 (newer model, optional)
 
 Environment:
   XAI_API_KEY       Your xAI API key (required)
@@ -148,6 +150,7 @@ You are a CODING AGENT. Your primary purpose is helping users build, debug, and 
 ## Your Models
 - Grok 4.20 — your main brain, fast and capable
 - Grok 4.20 Reason — deep reasoning mode for complex problems
+- Grok 4.3 — newer optional model for strong agentic coding and instruction following
 - Grok Code Fast — quick and cheap for simple tasks
 
 ## Core Rules

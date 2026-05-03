@@ -1,5 +1,5 @@
-/**
- * Raw REPL — no Ink for the chat area.
+﻿/**
+ * Raw REPL â€” no Ink for the chat area.
  * Uses process.stdout.write for output, readline for input.
  * Stable, no rendering glitches, no cursor drift.
  */
@@ -12,7 +12,7 @@ import { Agent } from '../core/agent.js';
 import { Permissions, type PermissionMode } from '../permissions/permissions.js';
 import { calculateCost, formatCost } from '../util/cost.js';
 import { formatTokenCount } from '../util/tokens.js';
-import { isPro, activateLicense, requirePro } from '../core/license.js';
+import { activateLicense } from '../core/license.js';
 import { isFirstLaunch, getCompanionId, saveCompanionConfig } from '../core/companion-config.js';
 import { COMPANIONS, COMPANION_IDS, getRandomQuip } from './companions.js';
 import { setConfigValue, loadConfig } from '../core/config.js';
@@ -20,10 +20,10 @@ import { basename } from 'path';
 
 const gradient = gradientString(...gradientColors.splash);
 
-// Footer state — tracks height so we can erase it before new content
+// Footer state â€” tracks height so we can erase it before new content
 let lastFooterHeight = 0;
 
-// ── Colors ──
+// â”€â”€ Colors â”€â”€
 const c = {
   prompt: chalk.hex(colors.success).bold,
   primary: chalk.hex(colors.primary),
@@ -58,28 +58,28 @@ export async function startRepl(config: ReplConfig): Promise<void> {
     terminal: true,
   });
 
-  // ── First launch: character picker ──
+  // â”€â”€ First launch: character picker â”€â”€
   if (isFirstLaunch()) {
     companionId = await pickCharacter(rl);
     saveCompanionConfig({ companionId, firstLaunchComplete: true });
   }
 
-  // ── Splash ──
+  // â”€â”€ Splash â”€â”€
   if (!config.skipSplash) {
     showSplash(agent.stats.modelName);
   }
 
-  // ── Footer ──
+  // â”€â”€ Footer â”€â”€
   drawFooter(agent, currentMode, isSandboxed, modelAlias, companionId, 'idle');
 
-  // ── Main loop ──
+  // â”€â”€ Main loop â”€â”€
   const promptUser = () => {
-    rl.question(c.prompt('❯ '), async (input) => {
+    rl.question(c.prompt('â¯ '), async (input) => {
       const trimmed = input.trim();
       if (!trimmed) { promptUser(); return; }
       history.push(trimmed);
 
-      // ── Slash commands ──
+      // â”€â”€ Slash commands â”€â”€
       if (trimmed.startsWith('/')) {
         eraseLastFooter(calcInputLines(trimmed));
         const [cmd, ...rest] = trimmed.slice(1).split(' ');
@@ -95,7 +95,7 @@ export async function startRepl(config: ReplConfig): Promise<void> {
         return;
       }
 
-      // ── Run agent ──
+      // â”€â”€ Run agent â”€â”€
       eraseLastFooter(calcInputLines(trimmed));
       console.log(''); // blank line before response
 
@@ -110,7 +110,7 @@ export async function startRepl(config: ReplConfig): Promise<void> {
           batchTimer = setTimeout(() => {
             const newText = currentStream.slice(lastFlushed);
             if (newText) {
-              // On Windows, \n alone doesn't carriage return — need \r\n
+              // On Windows, \n alone doesn't carriage return â€” need \r\n
               const fixed = newText.replace(/\r?\n/g, '\r\n');
               process.stdout.write(fixed);
               lastFlushed = currentStream.length;
@@ -149,20 +149,20 @@ export async function startRepl(config: ReplConfig): Promise<void> {
           if (firstStr) preview = firstStr.length > 50 ? firstStr.slice(0, 47) + '...' : firstStr;
         }
         const line = preview
-          ? `  ${c.dim('⚡')} ${c.primary(name)} ${c.muted(preview)}`
-          : `  ${c.dim('⚡')} ${c.primary(name)}`;
+          ? `  ${c.dim('âš¡')} ${c.primary(name)} ${c.muted(preview)}`
+          : `  ${c.dim('âš¡')} ${c.primary(name)}`;
         process.stdout.write(line + '\r\n');
       };
 
       (agent as any).onToolEnd = (name: string, result: any) => {
         if (result?.error) {
           lastToolEvent = 'error';
-          process.stdout.write(`  ${c.error('✗')} ${c.dim(name)} ${c.error(typeof result.error === 'string' ? result.error.slice(0, 60) : 'failed')}\r\n`);
+          process.stdout.write(`  ${c.error('âœ—')} ${c.dim(name)} ${c.error(typeof result.error === 'string' ? result.error.slice(0, 60) : 'failed')}\r\n`);
         } else {
           lastToolEvent = 'toolDone';
           const outLen = result?.output?.length || 0;
           const sizeHint = outLen > 1000 ? ` ${c.muted(`(${(outLen / 1024).toFixed(1)}KB)`)}` : '';
-          process.stdout.write(`  ${c.secondary('✓')} ${c.dim(name)}${sizeHint}\r\n`);
+          process.stdout.write(`  ${c.secondary('âœ“')} ${c.dim(name)}${sizeHint}\r\n`);
         }
       };
 
@@ -182,7 +182,7 @@ export async function startRepl(config: ReplConfig): Promise<void> {
             .map(([k, v]) => `  ${k}: ${typeof v === 'string' ? v.slice(0, 80) : JSON.stringify(v).slice(0, 80)}`)
             .join('\n');
           console.log('');
-          console.log(c.warning('⚠ Permission Required'));
+          console.log(c.warning('âš  Permission Required'));
           console.log(`Tool: ${c.primary(toolName)}`);
           if (check.reason) console.log(c.muted(check.reason));
           console.log(c.muted(argStr));
@@ -215,10 +215,10 @@ export async function startRepl(config: ReplConfig): Promise<void> {
 
       // Show tool summary if tools were used
       if (toolCount > 0) {
-        console.log(c.dim(`  ⚡ ${toolCount} tool${toolCount > 1 ? 's' : ''} used`));
+        console.log(c.dim(`  âš¡ ${toolCount} tool${toolCount > 1 ? 's' : ''} used`));
       }
 
-      // Footer with buddy — event reflects what just happened
+      // Footer with buddy â€” event reflects what just happened
       const footerEvent = result.error ? 'error' : toolCount > 0 ? 'toolDone' : 'idle';
       drawFooter(agent, currentMode, isSandboxed, modelAlias, companionId, footerEvent as any);
       promptUser();
@@ -228,7 +228,7 @@ export async function startRepl(config: ReplConfig): Promise<void> {
   promptUser();
 }
 
-// ── Splash Screen ──
+// â”€â”€ Splash Screen â”€â”€
 function showSplash(model: string): void {
   const figlet = require('figlet');
   let title: string;
@@ -240,7 +240,7 @@ function showSplash(model: string): void {
   }
 
   console.log('');
-  console.log(c.warning('  ★    ✦       ★          ✦        ★       ✦      ★'));
+  console.log(c.warning('  â˜…    âœ¦       â˜…          âœ¦        â˜…       âœ¦      â˜…'));
   console.log('');
   console.log(title);
   console.log('');
@@ -250,16 +250,16 @@ function showSplash(model: string): void {
   console.log(`  ${c.text('Model:')}   ${c.primary(model)}`);
   console.log(`  ${c.text('Version:')} ${c.primary(`v${brand.version}`)}`);
   console.log('');
-  console.log(c.warning('  ★    ✦       ★          ✦        ★       ✦      ★'));
+  console.log(c.warning('  â˜…    âœ¦       â˜…          âœ¦        â˜…       âœ¦      â˜…'));
   console.log('');
 }
 
-// ── Footer: erase previous, draw new, stays at bottom ──
+// â”€â”€ Footer: erase previous, draw new, stays at bottom â”€â”€
 const stripAnsi = (s: string) => s.replace(/\x1b\[[0-9;]*m/g, '');
 
 function calcInputLines(input: string): number {
   const cols = process.stdout.columns || 80;
-  const promptLen = 2; // "❯ " = 2 visual chars
+  const promptLen = 2; // "â¯ " = 2 visual chars
   return Math.ceil((promptLen + input.length) / cols) || 1;
 }
 
@@ -313,7 +313,7 @@ function buildFooterBox(
   }
 
   // Content rows
-  const statsLine = `${c.primary.bold(stats.modelName)} ${c.dim('│')} ${c.muted(`↑${formatTokenCount(stats.usage.prompt_tokens)} ↓${formatTokenCount(stats.usage.completion_tokens)}`)} ${c.dim('│')} ${c.warning(formatCost(cost))} ${c.dim('│')} ${modeColor(mode.toUpperCase())}${sandboxed ? c.warning(' 🔒') : ''} ${c.dim('│')} ${c.muted(basename(process.cwd()))}`;
+  const statsLine = `${c.primary.bold(stats.modelName)} ${c.dim('â”‚')} ${c.muted(`â†‘${formatTokenCount(stats.usage.prompt_tokens)} â†“${formatTokenCount(stats.usage.completion_tokens)}`)} ${c.dim('â”‚')} ${c.warning(formatCost(cost))} ${c.dim('â”‚')} ${modeColor(mode.toUpperCase())}${sandboxed ? c.warning(' ðŸ”’') : ''} ${c.dim('â”‚')} ${c.muted(basename(process.cwd()))}`;
   const quipLine = companion && quip
     ? c.dim(`${companion.name}: `) + chalk.hex(companion.color).italic(quip.length > 40 ? quip.slice(0, 37) + '...' : quip)
     : '';
@@ -325,26 +325,26 @@ function buildFooterBox(
     const cLen = stripAnsi(content).length;
     const bLen = buddy ? stripAnsi(buddy).length : 0;
     const gap = Math.max(1, w - cLen - bLen - 4);
-    let line = bdr('│') + ' ' + content + ' '.repeat(gap);
+    let line = bdr('â”‚') + ' ' + content + ' '.repeat(gap);
     if (buddy) line += buddy;
-    // Force right border to exact column w — guarantees alignment
-    line += `\x1b[${w}G` + bdr('│');
+    // Force right border to exact column w â€” guarantees alignment
+    line += `\x1b[${w}G` + bdr('â”‚');
     return line;
   }
 
   const maxRows = Math.max(contentRows.length, buddyLines.length);
   const lines: string[] = [];
-  lines.push(bdr('╭' + '─'.repeat(w - 2) + '╮'));
+  lines.push(bdr('â•­' + 'â”€'.repeat(w - 2) + 'â•®'));
   for (let i = 0; i < maxRows; i++) {
     const content = i < contentRows.length ? contentRows[i] : '';
     const buddy = i < buddyLines.length ? buddyLines[i] : null;
     lines.push(composeLine(content, buddy));
   }
-  lines.push(bdr('╰' + '─'.repeat(w - 2) + '╯'));
+  lines.push(bdr('â•°' + 'â”€'.repeat(w - 2) + 'â•¯'));
   return lines;
 }
 
-// ── Character Picker ──
+// â”€â”€ Character Picker â”€â”€
 async function pickCharacter(rl: readline.Interface): Promise<string> {
   console.log('');
   console.log(c.primary.bold('Choose Your Companion'));
@@ -353,7 +353,7 @@ async function pickCharacter(rl: readline.Interface): Promise<string> {
 
   for (let i = 0; i < COMPANION_IDS.length; i++) {
     const comp = COMPANIONS[COMPANION_IDS[i]];
-    console.log(`  ${chalk.hex(comp.color).bold(`${i + 1}. ${comp.name}`)} — ${c.muted(comp.description)}`);
+    console.log(`  ${chalk.hex(comp.color).bold(`${i + 1}. ${comp.name}`)} â€” ${c.muted(comp.description)}`);
   }
 
   console.log('');
@@ -372,7 +372,7 @@ async function pickCharacter(rl: readline.Interface): Promise<string> {
   });
 }
 
-// ── Slash Commands ──
+// â”€â”€ Slash Commands â”€â”€
 async function handleCommand(
   cmd: string, arg: string,
   agent: Agent, permissions: Permissions,
@@ -389,25 +389,25 @@ async function handleCommand(
     case 'help':
       console.log(`
 ${c.bold('Commands:')}
-  /help           — this message
-  /model          — switch model (standard, fast, reason)
-  /models         — list all models
-  /mode           — permission mode (manual, auto, yolo)
-  /mode sandbox   — toggle folder jail
-  /companion      — switch companion character
-  /about          — version, license, support links
-  /activate <key> — activate Pro license
-  /settings       — configure startup behavior
-  /stats          — token usage
-  /reset          — clear conversation
-  /quit           — exit
+  /help           â€” this message
+  /model          â€” switch model (standard, fast, reason, 4.3)
+  /models         â€” list all models
+  /mode           â€” permission mode (manual, auto, yolo)
+  /mode sandbox   â€” toggle folder jail
+  /companion      â€” switch companion character
+  /about          â€” version and support links
+  /activate       â€” legacy no-op; all features are free now
+  /settings       â€” configure startup behavior
+  /stats          â€” token usage
+  /reset          â€” clear conversation
+  /quit           â€” exit
 `);
       return;
 
     case 'model': {
       if (!arg) {
         const models = agent.getProvider().listModels();
-        const list = models.map(m => `${m.active ? '> ' : '  '}${m.alias} — ${m.name}`).join('\n');
+        const list = models.map(m => `${m.active ? '> ' : '  '}${m.alias} â€” ${m.name}`).join('\n');
         console.log(`\n${c.bold('Current model:')} ${agent.stats.modelName}\n\n${list}\n\nSwitch: /model <alias>\n`);
       } else {
         if (agent.switchModel(arg)) {
@@ -422,7 +422,7 @@ ${c.bold('Commands:')}
 
     case 'models': {
       const models = agent.getProvider().listModels();
-      const list = models.map(m => `${m.active ? '> ' : '  '}${m.alias} — ${m.name} (${m.context / 1024}K ctx)`).join('\n');
+      const list = models.map(m => `${m.active ? '> ' : '  '}${m.alias} â€” ${m.name} (${m.context / 1024}K ctx)`).join('\n');
       console.log(`\n${c.bold('Models:')}\n${list}\n`);
       return;
     }
@@ -431,22 +431,14 @@ ${c.bold('Commands:')}
       if (!arg) {
         console.log(`\nCurrent mode: ${c.bold(mode)}${sandboxed ? ' + sandbox' : ''}\n${permissions.getModeDescription()}\n`);
       } else if (arg === 'sandbox') {
-        if (!isPro()) {
-          console.log(`\n${requirePro('Sandbox mode')}\n`);
-          return;
-        }
         const on = permissions.toggleSandbox();
         if (on) permissions.setJailDir(process.cwd());
         setSandboxed(on);
         setConfigValue('lastSandbox', on);
-        console.log(`\nSandbox ${on ? 'enabled 🔒' : 'disabled'}\n${permissions.getModeDescription()}\n`);
+        console.log(`\nSandbox ${on ? 'enabled ðŸ”’' : 'disabled'}\n${permissions.getModeDescription()}\n`);
       } else {
         const validModes = ['manual', 'auto', 'yolo'];
         if (validModes.includes(arg)) {
-          if (arg === 'yolo' && !isPro()) {
-            console.log(`\n${requirePro('YOLO mode')}\n`);
-            return;
-          }
           permissions.setMode(arg as PermissionMode);
           setMode(arg as PermissionMode);
           setConfigValue('lastMode', arg as PermissionMode);
@@ -464,13 +456,9 @@ ${c.bold('Commands:')}
         const list = COMPANION_IDS.map(id => `${id === companionId ? '> ' : '  '}${COMPANIONS[id].name} (${id})`).join('\n');
         console.log(`\nCurrent companion: ${c.bold(current.name)}\n\n${list}\n\nSwitch: /companion <id>\n`);
       } else if (COMPANIONS[arg]) {
-        if (arg !== 'alien' && !isPro()) {
-          console.log(`\n${requirePro('Extra companions')}\n`);
-        } else {
-          setCompanionId(arg);
-          saveCompanionConfig({ companionId: arg, firstLaunchComplete: true });
-          console.log(`\nSwitched to ${chalk.hex(COMPANIONS[arg].color).bold(COMPANIONS[arg].name)}!\n`);
-        }
+        setCompanionId(arg);
+        saveCompanionConfig({ companionId: arg, firstLaunchComplete: true });
+        console.log(`\nSwitched to ${chalk.hex(COMPANIONS[arg].color).bold(COMPANIONS[arg].name)}!\n`);
       } else {
         console.log(`\nUnknown companion: ${arg}\nAvailable: ${COMPANION_IDS.join(', ')}\n`);
       }
@@ -479,7 +467,7 @@ ${c.bold('Commands:')}
 
     case 'stats': {
       const s = agent.stats;
-      console.log(`\nModel: ${s.modelName}\nMessages: ${s.messages}\nTokens: ↑${s.usage.prompt_tokens} ↓${s.usage.completion_tokens}\n`);
+      console.log(`\nModel: ${s.modelName}\nMessages: ${s.messages}\nTokens: â†‘${s.usage.prompt_tokens} â†“${s.usage.completion_tokens}\n`);
       return;
     }
 
@@ -489,31 +477,22 @@ ${c.bold('Commands:')}
       return;
 
     case 'about': {
-      const pro = isPro() ? '✅ Pro' : '🆓 Free';
       console.log('');
-      console.log(`${c.bold(`GROK CODE v${brand.version}`)} — ${pro}`);
+      console.log(`${c.bold(`GROK CODE v${brand.version}`)} â€” Free, all features unlocked`);
       console.log(brand.tagline);
-      console.log('');
-      if (isPro()) {
-        console.log('Thanks for being Pro! All features unlocked.');
-      } else {
-        console.log(`Upgrade to Pro ($5): https://grok-code-checkout.kevdogg102396.workers.dev`);
-        console.log(`Activate: /activate <key>`);
-      }
       console.log('');
       console.log(`${c.dim('Tip the dev:')} Cash App $k3v096 or https://cash.app/$k3v096`);
       console.log(`${c.dim('Star on GitHub:')} https://github.com/kevdogg102396-afk/grok-code`);
       console.log('');
-      console.log(c.dim('Built with ❤️  by Kevin Cline & Claude'));
+      console.log(c.dim('Built with â¤ï¸  by Kevin Cline & Claude'));
       console.log('');
       return;
     }
 
     case 'activate': {
       if (!arg) {
-        console.log('\nUsage: /activate <license-key>\nGet a key at: https://grok-code-checkout.kevdogg102396.workers.dev\n');
+        console.log('\nNo activation needed anymore. All Grok-Code features are unlocked for everyone.\nSupport: https://buymeacoffee.com/clawdworks\n');
       } else {
-        console.log('\nVerifying license with server…');
         const result = await activateLicense(arg);
         console.log(`\n${result.message}\n`);
       }
